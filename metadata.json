@@ -1,0 +1,20 @@
+{
+    "KPackageStructure": "Plasma/Wallpaper",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "vase7u@gmail.com",
+                "Name": "va5yx"
+            }
+        ],
+        "Description": "A slideshow for multiple monitors: wide pictures span all monitors together, like the Span mode on Windows, and individual pictures show a different one on each monitor.",
+        "Icon": "folder-image",
+        "Id": "com.github.vasilkalchev.multimonitorslideshow",
+        "License": "MIT",
+        "Name": "Multi-Monitor Slideshow",
+        "Version": "1.0.0",
+        "Website": "https://github.com/VasilKalchev/plasma-multi-monitor-slideshow"
+    },
+    "X-KDE-ParentApp": "org.kde.plasmashell",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

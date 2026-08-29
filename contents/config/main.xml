@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd" >
+  <kcfgfile name=""/>
+
+  <group name="General">
+    <entry name="SpanPaths" type="StringList">
+      <label>Folders of wide images stretched across all monitors together</label>
+      <default></default>
+    </entry>
+    <entry name="SinglePaths" type="StringList">
+      <label>Folders of individual images, a different one on each monitor</label>
+      <default></default>
+    </entry>
+    <entry name="SlideInterval" type="int">
+      <label>Interval between slides (s)</label>
+      <default>900</default>
+    </entry>
+    <entry name="ShowWallpaperHeader" type="Bool">
+      <label>Show the "Wallpaper" context menu separator label</label>
+      <default>false</default>
+    </entry>
+    <entry name="ShowOpenImageAction" type="Bool">
+      <label>Show "Open Image" in the context menu</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowNextAction" type="Bool">
+      <label>Show "Next" in the context menu</label>
+      <default>true</default>
+    </entry>
+    <entry name="ShowNextIndividualAction" type="Bool">
+      <label>Show "Next Individual" in the context menu</label>
+      <default>false</default>
+    </entry>
+    <entry name="ShowNextSpannedAction" type="Bool">
+      <label>Show "Next Spanned" in the context menu</label>
+      <default>false</default>
+    </entry>
+  </group>
+</kcfg>
