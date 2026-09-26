@@ -35,11 +35,15 @@ WallpaperItem {
     // back to a cover-fit over the whole desktop for anything else; 1 =
     // always center the image on the join between the monitors (and
     // vertically on the largest screen) and cover-fit around that.
-    // Recompute both layers right away when it changes, in case the config
-    // change does reach this instance (otherwise it applies on the next
-    // tick, like the folder lists).
+    // MatchPhysicalSize: scale each screen by its pixel size so a spanned
+    // image has the same physical size on every monitor (see deskLayout()).
+    // Recompute both layers right away when either changes, in case the
+    // config change does reach this instance (otherwise it applies on the
+    // next tick, like the folder lists).
     readonly property int spanFit: cfg.SpanFit === 1 ? 1 : 0
+    readonly property bool matchPhysicalSize: cfg.MatchPhysicalSize !== false
     onSpanFitChanged: refreshGeometry()
+    onMatchPhysicalSizeChanged: refreshGeometry()
 
     readonly property bool isSpanTurn: SpanState.isSpanTurn
     property string currentSource: isSpanTurn ? SpanState.currentSpanImage : computeMySingleSource()
@@ -365,7 +369,7 @@ WallpaperItem {
     // -- keeping geometry current --
     // Geometry is computed when an image loads, not bound, so it has to be
     // refreshed by hand whenever something it depends on changes: this
-    // screen's own size, or any screen's position or size.
+    // screen's own size, or any screen's position, size or pixel density.
     // Without this, a display that appears for a moment (a TV being turned
     // on) left a screen drawing its image at a stale size - Plasma briefly
     // resizes or rebuilds the wallpaper views, and the size taken during
@@ -377,7 +381,7 @@ WallpaperItem {
         var parts = [];
         for (var i = 0; i < screens.length; i++) {
             var s = screens[i];
-            parts.push([s.virtualX, s.virtualY, s.width, s.height].join(","));
+            parts.push([s.virtualX, s.virtualY, s.width, s.height, s.pixelDensity].join(","));
         }
         return parts.join(";") + "|" + root.width + "x" + root.height;
     }
@@ -394,24 +398,45 @@ WallpaperItem {
     readonly property real myVX: Screen.virtualX
     readonly property real myVY: Screen.virtualY
 
-    // All span geometry is worked out on a shared "desk": the arrangement
-    // of the screens in the display configuration, in pixels, with the
-    // largest screen as the reference. This assumes one row of screens,
-    // like the pre-split format itself.
+    // All span geometry is worked out on a shared "desk": the real, physical
+    // arrangement of the screens, measured in the largest screen's pixels.
+    // Screens differ in pixel size (a 23" 1080p pixel is ~14% bigger than a
+    // 27" 1440p one), so mapping the image pixel-for-pixel across screens
+    // makes it visibly larger on the coarser one even though a screenshot
+    // looks perfect. Each screen's `f` is how many reference pixels one of
+    // its own pixels spans (from Qt's pixelDensity, i.e. the monitor's EDID
+    // size); 1 when MatchPhysicalSize is off or a screen's size is unknown.
+    //
+    // Placement on the desk follows the display configuration:
+    // horizontally, screens are chained outward from the reference screen
+    // so neighbors stay touching (any pixel gap is kept); vertically, a
+    // screen keeps its relative alignment against the reference - top,
+    // centered, bottom, or anything in between - measured as a fraction of
+    // the height difference. This assumes one row of screens, like the
+    // pre-split format itself.
     function deskLayout() {
         var screens = Qt.application.screens;
         var list = [];
-        var ref = null;
+        var known = true;
         for (var i = 0; i < screens.length; i++) {
             var s = screens[i];
-            var d = { name: s.name, x: s.virtualX, y: s.virtualY, w: s.width, h: s.height };
-            d.dx = d.x;
-            d.dy = d.y;
-            d.dw = d.w;
-            d.dh = d.h;
+            var d = { name: s.name, x: s.virtualX, y: s.virtualY, w: s.width, h: s.height, density: s.pixelDensity };
             list.push(d);
-            if (ref === null || d.w * d.h > ref.w * ref.h) {
-                ref = d;
+            known = known && isFinite(d.density) && d.density > 0;
+        }
+        // The reference is the largest screen: by its real size when every
+        // screen reports one, else by pixel count. A pre-split image's slices
+        // are sized to it (see computeGeomFor()), so every other screen has
+        // to fit inside one slice; by pixel count alone, a big screen with
+        // few pixels (a TV) overflowed its slice.
+        var usePhys = root.matchPhysicalSize && known;
+        function size(d) {
+            return usePhys ? (d.w / d.density) * (d.h / d.density) : d.w * d.h;
+        }
+        var ref = null;
+        for (var r0 = 0; r0 < list.length; r0++) {
+            if (ref === null || size(list[r0]) > size(ref)) {
+                ref = list[r0];
             }
         }
         // Ordered left-to-right, then top-to-bottom among screens sharing a
@@ -420,6 +445,24 @@ WallpaperItem {
         // one index.
         list.sort(function (a, b) { return (a.x - b.x) || (a.y - b.y); });
         var refIndex = list.indexOf(ref);
+        for (var j = 0; j < list.length; j++) {
+            var e = list[j];
+            e.f = usePhys ? ref.density / e.density : 1;
+            e.dw = e.w * e.f;
+            e.dh = e.h * e.f;
+            var dh = ref.h - e.h;
+            e.dy = Math.abs(dh) < 1 ? e.y
+                 : ref.y + (e.y - ref.y) / dh * (ref.h - e.dh);
+        }
+        ref.dx = ref.x;
+        for (var l = refIndex - 1; l >= 0; l--) {
+            var gapL = list[l + 1].x - (list[l].x + list[l].w);
+            list[l].dx = list[l + 1].dx - gapL - list[l].dw;
+        }
+        for (var r = refIndex + 1; r < list.length; r++) {
+            var gapR = list[r].x - (list[r - 1].x + list[r - 1].w);
+            list[r].dx = list[r - 1].dx + list[r - 1].dw + gapR;
+        }
         // Find this screen by connector name first: while the layout is
         // changing, this item's own position can lag behind the screen list,
         // and a position match would then pick the wrong screen.
@@ -468,10 +511,10 @@ WallpaperItem {
         var me = desk.me, ref = desk.ref, n = desk.list.length;
         function toLocal(b, stretch) {
             return {
-                w: b.w,
-                h: b.h,
-                x: b.x - me.dx,
-                y: b.y - me.dy,
+                w: b.w / me.f,
+                h: b.h / me.f,
+                x: (b.x - me.dx) / me.f,
+                y: (b.y - me.dy) / me.f,
                 stretch: stretch
             };
         }
@@ -505,9 +548,9 @@ WallpaperItem {
                 // Each slice is one reference-screen-sized unit on the desk,
                 // laid out so the reference screen's own slice sits exactly
                 // on it. Every other screen shows whatever part of its slice
-                // it covers: a smaller screen next to the reference loses its
-                // slice's outer edge, never the edge at the seam, and its
-                // vertical crop follows its real alignment.
+                // it physically covers: a smaller screen next to the
+                // reference loses its slice's outer edge, never the edge at
+                // the seam, and its vertical crop follows its real alignment.
                 //
                 // Stretch, not PreserveAspectCrop: the slice's aspect only
                 // matches the screen's within 3%, and PreserveAspectCrop

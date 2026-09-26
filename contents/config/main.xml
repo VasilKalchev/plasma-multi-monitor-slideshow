@@ -22,6 +22,10 @@
       <label>How spanned images are fitted: 0 = detect pre-split images, 1 = center on the monitor join</label>
       <default>0</default>
     </entry>
+    <entry name="MatchPhysicalSize" type="Bool">
+      <label>Scale spanned images so they have the same physical size on every monitor</label>
+      <default>true</default>
+    </entry>
     <entry name="ShowWallpaperHeader" type="Bool">
       <label>Show the "Wallpaper" context menu separator label</label>
       <default>false</default>

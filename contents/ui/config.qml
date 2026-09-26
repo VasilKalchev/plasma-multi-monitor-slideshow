@@ -23,6 +23,9 @@ ColumnLayout {
     property int cfg_SpanFit: 0
     property int cfg_SpanFitDefault: 0
 
+    property bool cfg_MatchPhysicalSize: true
+    property bool cfg_MatchPhysicalSizeDefault: true
+
     property bool cfg_ShowWallpaperHeader: false
     property bool cfg_ShowWallpaperHeaderDefault: false
     property bool cfg_ShowOpenImageAction: true
@@ -167,6 +170,17 @@ ColumnLayout {
                 QQC2.ToolTip.visible: hovered && !popup.visible
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
                 QQC2.ToolTip.text: model[currentIndex].help
+            }
+
+            QQC2.CheckBox {
+                Layout.leftMargin: Kirigami.Units.largeSpacing
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Compensate for pixel size")
+                checked: root.cfg_MatchPhysicalSize
+                onToggled: root.cfg_MatchPhysicalSize = checked
+
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Monitors with different pixel sizes show the same picture at different physical sizes: a 23\" 1080p monitor's pixels are about 14% larger than a 27\" 1440p monitor's. When on, spanned images are scaled per monitor so they have the same real size on every monitor and lines continue straight across the bezel. Uses the size each monitor reports; turn it off if one reports a wrong size.")
             }
         }
     }
