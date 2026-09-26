@@ -20,6 +20,9 @@ ColumnLayout {
     property int cfg_SlideInterval: 900
     property int cfg_SlideIntervalDefault: 900
 
+    property int cfg_SpanFit: 0
+    property int cfg_SpanFitDefault: 0
+
     property bool cfg_ShowWallpaperHeader: false
     property bool cfg_ShowWallpaperHeaderDefault: false
     property bool cfg_ShowOpenImageAction: true
@@ -126,6 +129,44 @@ ColumnLayout {
                         }
                     }
                 }
+            }
+        }
+
+        RowLayout {
+            Kirigami.FormData.label: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanned images:")
+            spacing: Kirigami.Units.smallSpacing
+
+            QQC2.ComboBox {
+                id: fitCombo
+                textRole: "text"
+                model: [
+                    {
+                        text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Detect pre-split images"),
+                        help: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Images made of one monitor-shaped part per monitor are split so each part lands on its own monitor. Everything else is treated as one panorama, centered and scaled until all monitors are covered.")
+                    },
+                    {
+                        text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Center on the monitor join"),
+                        help: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Every image is centered horizontally on the edge between your monitors (vertically on your largest monitor) and scaled until all monitors are covered. A two-part wallpaper splits on the bezel; wider or taller images lose more at the edges.")
+                    }
+                ]
+                currentIndex: root.cfg_SpanFit === 1 ? 1 : 0
+                onActivated: (index) => root.cfg_SpanFit = index
+
+                delegate: QQC2.ItemDelegate {
+                    required property var modelData
+                    required property int index
+                    width: ListView.view ? ListView.view.width : implicitWidth
+                    text: modelData.text
+                    highlighted: fitCombo.highlightedIndex === index
+                    hoverEnabled: true
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                    QQC2.ToolTip.text: modelData.help
+                }
+
+                QQC2.ToolTip.visible: hovered && !popup.visible
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                QQC2.ToolTip.text: model[currentIndex].help
             }
         }
     }

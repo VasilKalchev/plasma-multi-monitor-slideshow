@@ -31,6 +31,16 @@ WallpaperItem {
 
     readonly property var cfg: root.configuration
 
+    // SpanFit: 0 = detect pre-split images (one slice per monitor) and fall
+    // back to a cover-fit over the whole desktop for anything else; 1 =
+    // always center the image on the join between the monitors (and
+    // vertically on the largest screen) and cover-fit around that.
+    // Recompute both layers right away when it changes, in case the config
+    // change does reach this instance (otherwise it applies on the next
+    // tick, like the folder lists).
+    readonly property int spanFit: cfg.SpanFit === 1 ? 1 : 0
+    onSpanFitChanged: refreshGeometry()
+
     readonly property bool isSpanTurn: SpanState.isSpanTurn
     property string currentSource: isSpanTurn ? SpanState.currentSpanImage : computeMySingleSource()
 
@@ -432,6 +442,18 @@ WallpaperItem {
                  box: { x: minX, y: minY, w: maxX - minX, h: maxY - minY } };
     }
 
+    // Horizontal middle of the screen row on the desk, counted in screens,
+    // not pixels: with an even count, the bezel between the two middle
+    // screens; with an odd count, the center of the middle screen.
+    function middleJoinX(desk) {
+        var n = desk.list.length;
+        if (n % 2 === 0) {
+            return desk.list[n / 2].dx;
+        }
+        var mid = desk.list[(n - 1) / 2];
+        return mid.dx + mid.dw / 2;
+    }
+
     // Geometry for a display layer: where to position/size it so it shows
     // the right content for this screen. Pure function of (isSpan,
     // probeSize) - each of the two crossfade layers calls this with its
@@ -452,6 +474,22 @@ WallpaperItem {
                 y: b.y - me.dy,
                 stretch: stretch
             };
+        }
+
+        if (root.spanFit === 1) {
+            // Centered on the join between monitors: the image's center goes
+            // on the middle bezel horizontally and on the largest screen's
+            // middle vertically, and it's scaled until every screen is
+            // covered. The box is the smallest rectangle centered on that
+            // point that contains every screen; PreserveAspectCrop then
+            // cover-fits the image into it, centered, so no probe size is
+            // needed. A two-part image's seam lands on the bezel whenever its
+            // halves match the screens' shape.
+            var cx = middleJoinX(desk);
+            var cy = ref.dy + ref.dh / 2;
+            var halfW = Math.max(cx - desk.box.x, desk.box.x + desk.box.w - cx);
+            var halfH = Math.max(cy - desk.box.y, desk.box.y + desk.box.h - cy);
+            return toLocal({ x: cx - halfW, y: cy - halfH, w: 2 * halfW, h: 2 * halfH }, false);
         }
 
         if (probeSize.width > 0 && probeSize.height > 0) {
