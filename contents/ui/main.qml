@@ -159,10 +159,17 @@ WallpaperItem {
     // not the same shuffle at an offset: with a shared order, screens
     // whose offsets are close show each other's pictures a few changes
     // apart.
+    //
+    // With a sorted order the screens instead share one walk through the
+    // list: each turn every screen, left to right, takes the next image
+    // after SpanState.singleStart (see SpanState.buildTurns()).
     function computeMySingleSource() {
         var images = SpanState.singleImages;
         if (images.length === 0) {
             return "";
+        }
+        if (SpanState.order !== 0) {
+            return images[(SpanState.singleStart + myScreenIndex()) % images.length];
         }
         var tick = SpanState.tickCount;
         var sLap = Math.floor(tick / images.length);
@@ -240,7 +247,7 @@ WallpaperItem {
     // Scanning also runs concurrently, one model (and thread) per folder,
     // only while a scan is in flight.
     property var _scanJobs: []        // [{ kind: "span" | "single", folder: url, gen: int }]
-    property var _scanResults: []     // per job index: array of image URLs, or undefined
+    property var _scanResults: []     // per job index: array of { url, name, time }, or undefined
     property int _scanPending: 0
     property int _scanGeneration: 0
 
@@ -267,7 +274,12 @@ WallpaperItem {
                 reported = true;
                 var files = [];
                 for (var i = 0; i < count; i++) {
-                    files.push(get(i, "fileUrl").toString());
+                    var modified = get(i, "fileModified");
+                    files.push({
+                        url: get(i, "fileUrl").toString(),
+                        name: String(get(i, "fileName")).toLowerCase(),
+                        time: modified instanceof Date ? modified.getTime() : 0
+                    });
                 }
                 root._scanReport(modelData.gen, index, files);
             }
@@ -290,15 +302,16 @@ WallpaperItem {
     }
 
     function _scanFinish() {
-        var span = [], single = [];
+        var span = [], single = [], keys = {};
         for (var i = 0; i < _scanJobs.length; i++) {
             var target = _scanJobs[i].kind === "span" ? span : single;
             var files = _scanResults[i] || [];
             for (var j = 0; j < files.length; j++) {
-                target.push(files[j]);
+                target.push(files[j].url);
+                keys[files[j].url] = { name: files[j].name, time: files[j].time };
             }
         }
-        SpanState.configure(span, single, cfg.SlideInterval);
+        SpanState.configure(span, single, cfg.SlideInterval, cfg.SlideshowOrder || 0, keys);
         // Tear the models down (and their threads with them). Deferred: this
         // runs inside the last model's own status handler.
         var gen = _scanGeneration;
@@ -312,7 +325,7 @@ WallpaperItem {
 
     function _configSignature() {
         return [JSON.stringify(cfg.SpanPaths || []), JSON.stringify(cfg.SinglePaths || []),
-                cfg.SlideInterval].join("|");
+                cfg.SlideInterval, cfg.SlideshowOrder || 0].join("|");
     }
 
     // The folders are scanned again on every tick, so images added to or
@@ -380,7 +393,7 @@ WallpaperItem {
     // each edit; whichever screen has the newest stamp wins, and the others
     // copy its values into their own config, so the dialog on any screen
     // shows (and edits) the same settings.
-    readonly property var sharedKeys: ["SpanPaths", "SinglePaths", "SlideInterval", "SpanFit",
+    readonly property var sharedKeys: ["SpanPaths", "SinglePaths", "SlideInterval", "SlideshowOrder", "SpanFit",
         "MatchPhysicalSize", "ShowWallpaperHeader", "ShowOpenImageAction",
         "ShowNextAction", "ShowNextIndividualAction", "ShowNextSpannedAction"]
 
@@ -548,6 +561,32 @@ WallpaperItem {
         }
         var mid = desk.list[(n - 1) / 2];
         return mid.dx + mid.dw / 2;
+    }
+
+    // This screen's place in the row of screens, left to right, counting
+    // screens at the same position (mirrors) once, like
+    // SpanState.screenCount.
+    function myScreenIndex() {
+        var screens = Qt.application.screens;
+        var mx = root.myVX, my = root.myVY;
+        for (var i = 0; i < screens.length; i++) {
+            if (root.myScreenName !== "" && screens[i].name === root.myScreenName) {
+                mx = screens[i].virtualX;
+                my = screens[i].virtualY;
+                break;
+            }
+        }
+        var seen = {};
+        var index = 0;
+        for (var j = 0; j < screens.length; j++) {
+            var s = screens[j];
+            var key = s.virtualX + "," + s.virtualY;
+            if (seen[key] === undefined && (s.virtualX < mx || (s.virtualX === mx && s.virtualY < my))) {
+                seen[key] = true;
+                index++;
+            }
+        }
+        return index;
     }
 
     // Geometry for a display layer: where to position/size it so it shows

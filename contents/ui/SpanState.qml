@@ -35,8 +35,37 @@ QtObject {
     property bool isSpanTurn: false
     property string currentSpanImage: ""
 
+    // SlideshowOrder: 0 = random, 1 = A to Z, 2 = Z to A, 3 = date
+    // modified (newest first), 4 = date modified (oldest first).
+    property int order: 0
+    // Sorted orders only: on a single-image turn, screen k (counted left to
+    // right) shows singleImages[singleStart + k], so every screen shows the
+    // next image in line and one turn uses up one image per screen.
+    property int singleStart: 0
+
     property var _shuffledIndices: []
     property int _shuffledLap: -1
+
+    // Sorted orders only: one lap of turns, each { span: url } or
+    // { single: index into singleImages }, built for _turnsScreens screens.
+    property var _turns: []
+    property int _turnsScreens: -1
+    property var _sortKeys: ({})     // url -> { name: lowercase file name, time: ms }
+
+    // Screens at distinct positions; mirrored screens show the same image.
+    readonly property int screenCount: {
+        var screens = Qt.application.screens;
+        var seen = {};
+        var n = 0;
+        for (var i = 0; i < screens.length; i++) {
+            var key = screens[i].virtualX + "," + screens[i].virtualY;
+            if (seen[key] === undefined) {
+                seen[key] = true;
+                n++;
+            }
+        }
+        return Math.max(1, n);
+    }
 
     // -- deterministic seeded PRNG (mulberry32) --
     function mulberry32(seed) {
@@ -69,11 +98,66 @@ QtObject {
         return a;
     }
 
+    // Sort comparator for the sorted orders; ties fall back to the URL so
+    // the order is total and the same on every screen.
+    function compareImages(a, b) {
+        var ka = _sortKeys[a] || { name: a, time: 0 };
+        var kb = _sortKeys[b] || { name: b, time: 0 };
+        var c = 0;
+        if (order === 1 || order === 2) {
+            c = ka.name.localeCompare(kb.name);
+            if (order === 2) {
+                c = -c;
+            }
+        } else if (order === 3) {
+            c = kb.time - ka.time;
+        } else if (order === 4) {
+            c = ka.time - kb.time;
+        }
+        return c !== 0 ? c : (a < b ? -1 : (a > b ? 1 : 0));
+    }
+
+    // Merges both sorted lists into one lap. A span image is one turn; a
+    // single-image turn takes the next screenCount single images, one per
+    // screen, so no screen repeats the picture its neighbour just had.
+    function buildTurns() {
+        var n = screenCount;
+        var turns = [];
+        var i = 0, j = 0;
+        while (i < spanImages.length || j < singleImages.length) {
+            if (j >= singleImages.length
+                    || (i < spanImages.length && compareImages(spanImages[i], singleImages[j]) <= 0)) {
+                turns.push({ span: spanImages[i] });
+                i++;
+            } else {
+                turns.push({ single: j });
+                j += n;
+            }
+        }
+        return turns;
+    }
+
     function pickCurrent() {
         var total = spanImages.length + singleImages.length;
         if (total === 0) {
             isSpanTurn = false;
             currentSpanImage = "";
+            return;
+        }
+        if (order !== 0) {
+            if (_turnsScreens !== screenCount) {
+                _turns = buildTurns();
+                _turnsScreens = screenCount;
+            }
+            var turn = _turns[tickCount % _turns.length];
+            if (turn.span !== undefined) {
+                isSpanTurn = true;
+                currentSpanImage = turn.span;
+            } else {
+                singleStart = turn.single;
+                isSpanTurn = false;
+                currentSpanImage = "";
+            }
             return;
         }
         var lap = Math.floor(tickCount / total);
@@ -167,18 +251,26 @@ QtObject {
 
     // Called by whichever screen instance claimed and ran the scan. Only
     // the claim holder gets here, so the claim this retires is the current
-    // one. The lists arrive unsorted, and are sorted so every screen's
-    // shuffle starts from the same order.
-    function configure(spanList, singleList, interval) {
+    // one. The lists arrive unsorted; sortKeys maps each URL to its file
+    // name and modification time, for the sorted orders.
+    function configure(spanList, singleList, interval, sortOrder, sortKeys) {
         // A shuffle is a permutation of the old total; reshuffle for the new one.
         if (spanList.length + singleList.length !== _shuffledIndices.length) {
             _shuffledIndices = [];
             _shuffledLap = -1;
         }
-        spanList.sort();
-        singleList.sort();
+        order = sortOrder;
+        _sortKeys = sortKeys;
+        if (order === 0) {
+            spanList.sort();
+            singleList.sort();
+        } else {
+            spanList.sort(compareImages);
+            singleList.sort(compareImages);
+        }
         spanImages = spanList;
         singleImages = singleList;
+        _turnsScreens = -1;
         slideInterval = interval;
         scanCompleted = scanClaim;
         pickCurrent();

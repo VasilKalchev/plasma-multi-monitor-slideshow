@@ -20,6 +20,9 @@ ColumnLayout {
     property int cfg_SlideInterval: 900
     property int cfg_SlideIntervalDefault: 900
 
+    property int cfg_SlideshowOrder: 0
+    property int cfg_SlideshowOrderDefault: 0
+
     property int cfg_SpanFit: 0
     property int cfg_SpanFitDefault: 0
 
@@ -76,6 +79,28 @@ ColumnLayout {
                 textFromValue: (value, locale) => i18ndp("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "%1 minute", "%1 minutes", value)
                 valueFromText: (text, locale) => parseInt(text)
                 onValueModified: { root.cfg_SlideInterval = value * 60; root.stamp(); }
+            }
+
+            QQC2.Label {
+                Layout.leftMargin: Kirigami.Units.largeSpacing
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Order:")
+            }
+
+            QQC2.ComboBox {
+                id: orderCombo
+                model: [
+                    i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Random"),
+                    i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "A to Z"),
+                    i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Z to A"),
+                    i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Newest first"),
+                    i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Oldest first")
+                ]
+                currentIndex: Math.max(0, Math.min(4, root.cfg_SlideshowOrder))
+                onActivated: (index) => { root.cfg_SlideshowOrder = index; root.stamp(); }
+
+                QQC2.ToolTip.visible: hovered && !popup.visible
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanned and individual images take turns in one sequence. Random shuffles it. The other orders go through the images by file name or by date modified; on an individual turn the monitors show the next images in line, left to right.")
             }
 
             QQC2.Button {

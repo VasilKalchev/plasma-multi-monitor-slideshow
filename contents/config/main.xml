@@ -18,6 +18,10 @@
       <label>Interval between slides (s)</label>
       <default>900</default>
     </entry>
+    <entry name="SlideshowOrder" type="Int">
+      <label>Order of the images: 0 = random, 1 = A to Z, 2 = Z to A, 3 = date modified (newest first), 4 = date modified (oldest first)</label>
+      <default>0</default>
+    </entry>
     <entry name="SpanFit" type="Int">
       <label>How spanned images are fitted: 0 = detect pre-split images, 1 = center on the monitor join</label>
       <default>0</default>
