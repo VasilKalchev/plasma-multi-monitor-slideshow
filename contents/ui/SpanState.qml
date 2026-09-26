@@ -105,6 +105,22 @@ QtObject {
         }
     }
 
+    // The newest settings seen from any screen, so every screen can run with
+    // the same settings. Plasma stores wallpaper settings per screen, and
+    // the settings dialog only edits the screen it was opened on. The
+    // dialog stamps every edit with ConfigStamp (ms since the epoch); each
+    // screen offers its settings here, and any screen holding older ones
+    // copies these into its own config (see main.qml's syncConfig()).
+    property real configStamp: 0
+    property var sharedConfig: null
+
+    function offerConfig(stamp, values) {
+        if (sharedConfig === null || stamp > configStamp) {
+            sharedConfig = values;
+            configStamp = stamp;
+        }
+    }
+
     // Config signature of the scan that has been claimed (see claimScan),
     // when it was claimed, and the signature whose scan actually finished.
     property string scanClaim: ""

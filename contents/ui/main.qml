@@ -355,8 +355,17 @@ WallpaperItem {
     // when the wallpaper is about to change: an edit in Settings takes
     // effect on the next rotation, and any of the "Next ..." context-menu
     // actions doubles as an explicit "apply now".
+    //
+    // Settings are shared first (see syncConfig()), and the rescan waits
+    // until every screen has handled this tick, so a screen whose settings
+    // were edited has offered them before any screen scans.
     property int lastTick: SpanState.tickCount
     onLastTickChanged: {
+        syncConfig();
+        // A fresh closure per screen: callLater merges calls to the same function.
+        Qt.callLater(function () { root._afterTick(); });
+    }
+    function _afterTick() {
         rescan();
         refreshGeometry();
     }
@@ -364,6 +373,50 @@ WallpaperItem {
     function refreshGeometry() {
         layerA.geom = computeGeomFor(layerA.span, layerA.probeSize);
         layerB.geom = computeGeomFor(layerB.span, layerB.probeSize);
+    }
+
+    // -- one set of settings for every screen --
+    // Every setting the dialog edits. ConfigStamp is set by the dialog on
+    // each edit; whichever screen has the newest stamp wins, and the others
+    // copy its values into their own config, so the dialog on any screen
+    // shows (and edits) the same settings.
+    readonly property var sharedKeys: ["SpanPaths", "SinglePaths", "SlideInterval", "SpanFit",
+        "MatchPhysicalSize", "ShowWallpaperHeader", "ShowOpenImageAction",
+        "ShowNextAction", "ShowNextIndividualAction", "ShowNextSpannedAction"]
+
+    function _stampOf(value) {
+        var n = Number(value);
+        return isFinite(n) ? n : 0;
+    }
+
+    function syncConfig() {
+        var mine = {};
+        for (var i = 0; i < sharedKeys.length; i++) {
+            var v = cfg[sharedKeys[i]];
+            mine[sharedKeys[i]] = Array.isArray(v) ? v.slice() : v;
+        }
+        SpanState.offerConfig(_stampOf(cfg.ConfigStamp), mine);
+        adoptSharedConfig();
+    }
+
+    function adoptSharedConfig() {
+        var shared = SpanState.sharedConfig;
+        if (shared === null || SpanState.configStamp <= _stampOf(cfg.ConfigStamp)) {
+            return;
+        }
+        for (var i = 0; i < sharedKeys.length; i++) {
+            var v = shared[sharedKeys[i]];
+            cfg[sharedKeys[i]] = Array.isArray(v) ? v.slice() : v;
+        }
+        cfg.ConfigStamp = String(SpanState.configStamp);
+        cfg.writeConfig();
+    }
+
+    Connections {
+        target: SpanState
+        function onConfigStampChanged() {
+            root.adoptSharedConfig();
+        }
     }
 
     // -- keeping geometry current --
@@ -586,6 +639,7 @@ WallpaperItem {
 
     Component.onCompleted: {
         root.loading = !nothingToShow;
+        syncConfig();
         Qt.callLater(function () { root.rescan(); });
     }
 

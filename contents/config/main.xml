@@ -26,6 +26,10 @@
       <label>Scale spanned images so they have the same physical size on every monitor</label>
       <default>true</default>
     </entry>
+    <entry name="ConfigStamp" type="String">
+      <label>When the settings were last edited (ms since the epoch); the newest settings are shared by every screen</label>
+      <default></default>
+    </entry>
     <entry name="ShowWallpaperHeader" type="Bool">
       <label>Show the "Wallpaper" context menu separator label</label>
       <default>false</default>

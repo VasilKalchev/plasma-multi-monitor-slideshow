@@ -37,6 +37,15 @@ ColumnLayout {
     property bool cfg_ShowNextSpannedAction: false
     property bool cfg_ShowNextSpannedActionDefault: false
 
+    // Every edit is stamped, so the running wallpaper can tell these are the
+    // newest settings and share them with every other screen (see
+    // SpanState.offerConfig()).
+    property string cfg_ConfigStamp: ""
+    property string cfg_ConfigStampDefault: ""
+    function stamp() {
+        cfg_ConfigStamp = String(Date.now());
+    }
+
     // The shown context-menu entries, for the "Context Menu…" button's tooltip.
     readonly property var shownMenuEntries: {
         const names = [];
@@ -66,7 +75,7 @@ ColumnLayout {
                 value: Math.max(1, Math.round(root.cfg_SlideInterval / 60))
                 textFromValue: (value, locale) => i18ndp("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "%1 minute", "%1 minutes", value)
                 valueFromText: (text, locale) => parseInt(text)
-                onValueModified: root.cfg_SlideInterval = value * 60
+                onValueModified: { root.cfg_SlideInterval = value * 60; root.stamp(); }
             }
 
             QQC2.Button {
@@ -93,7 +102,7 @@ ColumnLayout {
                         QQC2.CheckBox {
                             text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "\"Wallpaper\" separator label")
                             checked: root.cfg_ShowWallpaperHeader
-                            onToggled: root.cfg_ShowWallpaperHeader = checked
+                            onToggled: { root.cfg_ShowWallpaperHeader = checked; root.stamp(); }
                             QQC2.ToolTip.visible: hovered
                             QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
                             QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "A grayed-out \"Wallpaper\" heading above the entries below")
@@ -101,7 +110,7 @@ ColumnLayout {
                         QQC2.CheckBox {
                             text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Open Image")
                             checked: root.cfg_ShowOpenImageAction
-                            onToggled: root.cfg_ShowOpenImageAction = checked
+                            onToggled: { root.cfg_ShowOpenImageAction = checked; root.stamp(); }
                             QQC2.ToolTip.visible: hovered
                             QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
                             QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Opens the image shown on that monitor in your image viewer")
@@ -109,7 +118,7 @@ ColumnLayout {
                         QQC2.CheckBox {
                             text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Next")
                             checked: root.cfg_ShowNextAction
-                            onToggled: root.cfg_ShowNextAction = checked
+                            onToggled: { root.cfg_ShowNextAction = checked; root.stamp(); }
                             QQC2.ToolTip.visible: hovered
                             QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
                             QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Skips to the next image in the sequence, spanned or individual")
@@ -117,7 +126,7 @@ ColumnLayout {
                         QQC2.CheckBox {
                             text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Next Individual")
                             checked: root.cfg_ShowNextIndividualAction
-                            onToggled: root.cfg_ShowNextIndividualAction = checked
+                            onToggled: { root.cfg_ShowNextIndividualAction = checked; root.stamp(); }
                             QQC2.ToolTip.visible: hovered
                             QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
                             QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Skips ahead to the next turn of individual images, one per monitor")
@@ -125,7 +134,7 @@ ColumnLayout {
                         QQC2.CheckBox {
                             text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Next Spanned")
                             checked: root.cfg_ShowNextSpannedAction
-                            onToggled: root.cfg_ShowNextSpannedAction = checked
+                            onToggled: { root.cfg_ShowNextSpannedAction = checked; root.stamp(); }
                             QQC2.ToolTip.visible: hovered
                             QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
                             QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Skips ahead to the next spanned image")
@@ -153,7 +162,7 @@ ColumnLayout {
                     }
                 ]
                 currentIndex: root.cfg_SpanFit === 1 ? 1 : 0
-                onActivated: (index) => root.cfg_SpanFit = index
+                onActivated: (index) => { root.cfg_SpanFit = index; root.stamp(); }
 
                 delegate: QQC2.ItemDelegate {
                     required property var modelData
@@ -176,7 +185,7 @@ ColumnLayout {
                 Layout.leftMargin: Kirigami.Units.largeSpacing
                 text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Compensate for pixel size")
                 checked: root.cfg_MatchPhysicalSize
-                onToggled: root.cfg_MatchPhysicalSize = checked
+                onToggled: { root.cfg_MatchPhysicalSize = checked; root.stamp(); }
 
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
@@ -201,7 +210,7 @@ ColumnLayout {
             title: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Individual folders")
             toolTip: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Ordinary wallpapers, a different one on each monitor")
             paths: root.cfg_SinglePaths
-            onPathsEdited: (newPaths) => root.cfg_SinglePaths = newPaths
+            onPathsEdited: (newPaths) => { root.cfg_SinglePaths = newPaths; root.stamp(); }
         }
 
         Kirigami.Separator {
@@ -214,7 +223,7 @@ ColumnLayout {
             title: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanning folders")
             toolTip: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Wide images, each shown across all monitors together")
             paths: root.cfg_SpanPaths
-            onPathsEdited: (newPaths) => root.cfg_SpanPaths = newPaths
+            onPathsEdited: (newPaths) => { root.cfg_SpanPaths = newPaths; root.stamp(); }
         }
     }
 }
