@@ -14,6 +14,10 @@
       <label>Folders of individual images, a different one on each monitor</label>
       <default></default>
     </entry>
+    <entry name="DisabledPaths" type="StringList">
+      <label>Folders from SpanPaths or SinglePaths that are unticked: kept in the lists, left out of the slideshow</label>
+      <default></default>
+    </entry>
     <entry name="SlideInterval" type="int">
       <label>Interval between slides (s)</label>
       <default>900</default>

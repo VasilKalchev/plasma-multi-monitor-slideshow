@@ -17,6 +17,8 @@ ColumnLayout {
     property list<string> cfg_SpanPathsDefault: []
     property list<string> cfg_SinglePaths: []
     property list<string> cfg_SinglePathsDefault: []
+    property list<string> cfg_DisabledPaths: []
+    property list<string> cfg_DisabledPathsDefault: []
     property int cfg_SlideInterval: 900
     property int cfg_SlideIntervalDefault: 900
 
@@ -48,6 +50,45 @@ ColumnLayout {
     function stamp() {
         cfg_ConfigStamp = String(Date.now());
     }
+
+    // Unticked folders stay listed but are left out of the slideshow.
+    function setFolderEnabled(folder, enabled) {
+        const list = cfg_DisabledPaths.filter(p => p !== folder);
+        if (!enabled) {
+            list.push(folder);
+        }
+        cfg_DisabledPaths = list;
+        stamp();
+    }
+
+    // Saves an edited folder list, forgetting removed folders' ticks.
+    function setPaths(isSpan, newPaths) {
+        if (isSpan) {
+            cfg_SpanPaths = newPaths;
+        } else {
+            cfg_SinglePaths = newPaths;
+        }
+        cfg_DisabledPaths = cfg_DisabledPaths.filter(p => cfg_SpanPaths.indexOf(p) !== -1 || cfg_SinglePaths.indexOf(p) !== -1);
+        stamp();
+    }
+
+    // The folder whose images are shown on the right.
+    property string selectedFolder: ""
+    readonly property bool selectedIsSpan: cfg_SpanPaths.indexOf(selectedFolder) !== -1
+
+    // Keeps a folder selected while there is one to select.
+    function ensureSelection() {
+        if (selectedFolder !== ""
+                && (cfg_SpanPaths.indexOf(selectedFolder) !== -1 || cfg_SinglePaths.indexOf(selectedFolder) !== -1)) {
+            return;
+        }
+        selectedFolder = cfg_SinglePaths.length > 0 ? cfg_SinglePaths[0]
+                       : cfg_SpanPaths.length > 0 ? cfg_SpanPaths[0] : "";
+    }
+    // Deferred, so both lists are loaded before the first pick.
+    onCfg_SpanPathsChanged: Qt.callLater(ensureSelection)
+    onCfg_SinglePathsChanged: Qt.callLater(ensureSelection)
+    Component.onCompleted: Qt.callLater(ensureSelection)
 
     // The shown context-menu entries, for the "Context Menu…" button's tooltip.
     readonly property var shownMenuEntries: {
@@ -219,36 +260,76 @@ ColumnLayout {
         }
     }
 
-    // The folder lists, individual folders first.
-    ColumnLayout {
+    // Folders on the left, the selected folder's images on the right.
+    RowLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         spacing: 0
 
-        Kirigami.Separator {
-            Layout.fillWidth: true
+        // Wide enough for most paths; longer ones wrap. Layouts fill by
+        // default, so the width is fixed explicitly.
+        ColumnLayout {
+            Layout.fillWidth: false
+            Layout.fillHeight: true
+            Layout.preferredWidth: Kirigami.Units.gridUnit * 20
+            spacing: 0
+
+            Kirigami.Separator {
+                Layout.fillWidth: true
+            }
+
+            FolderListSection {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                title: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Individual folders")
+                toolTip: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Ordinary wallpapers, a different one on each monitor")
+                paths: root.cfg_SinglePaths
+                disabledPaths: root.cfg_DisabledPaths
+                selectedFolder: root.selectedFolder
+                onPathsEdited: (newPaths) => root.setPaths(false, newPaths)
+                onFolderEnabledToggled: (folder, enabled) => root.setFolderEnabled(folder, enabled)
+                onFolderSelected: (folder) => { root.selectedFolder = folder; }
+            }
+
+            Kirigami.Separator {
+                Layout.fillWidth: true
+            }
+
+            FolderListSection {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                title: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanning folders")
+                toolTip: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Wide images, each shown across all monitors together")
+                paths: root.cfg_SpanPaths
+                disabledPaths: root.cfg_DisabledPaths
+                selectedFolder: root.selectedFolder
+                onPathsEdited: (newPaths) => root.setPaths(true, newPaths)
+                onFolderEnabledToggled: (folder, enabled) => root.setFolderEnabled(folder, enabled)
+                onFolderSelected: (folder) => { root.selectedFolder = folder; }
+            }
         }
 
-        FolderListSection {
+        Kirigami.Separator {
+            Layout.fillHeight: true
+        }
+
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            title: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Individual folders")
-            toolTip: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Ordinary wallpapers, a different one on each monitor")
-            paths: root.cfg_SinglePaths
-            onPathsEdited: (newPaths) => { root.cfg_SinglePaths = newPaths; root.stamp(); }
-        }
+            spacing: 0
 
-        Kirigami.Separator {
-            Layout.fillWidth: true
-        }
+            Kirigami.Separator {
+                Layout.fillWidth: true
+            }
 
-        FolderListSection {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            title: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanning folders")
-            toolTip: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Wide images, each shown across all monitors together")
-            paths: root.cfg_SpanPaths
-            onPathsEdited: (newPaths) => { root.cfg_SpanPaths = newPaths; root.stamp(); }
+            FolderImages {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                folder: root.selectedFolder
+                isSpan: root.selectedIsSpan
+                folderEnabled: root.cfg_DisabledPaths.indexOf(root.selectedFolder) === -1
+                order: root.cfg_SlideshowOrder
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 /*
     A titled, editable list of folder paths, used twice in config.qml
     (once for the individual folders, once for the spanning folders).
+    Clicking a folder selects it, so config.qml can show its images.
 */
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -14,7 +15,11 @@ ColumnLayout {
     property string title: ""
     property string toolTip: ""
     property list<string> paths: []
+    property list<string> disabledPaths: []
+    property string selectedFolder: ""
     signal pathsEdited(var newPaths)
+    signal folderSelected(string folder)
+    signal folderEnabledToggled(string folder, bool enabled)
 
     // A folder URL as a readable path.
     function localPath(url) {
@@ -70,8 +75,11 @@ ColumnLayout {
                 required property string modelData
                 required property int index
                 readonly property string path: root.localPath(modelData)
+                readonly property bool folderEnabled: root.disabledPaths.indexOf(modelData) === -1
 
                 width: pathsView.width
+                highlighted: baseListItem.modelData === root.selectedFolder
+                onClicked: root.folderSelected(baseListItem.modelData)
 
                 text: path.split("/").pop()
                 // The parent folder; a zero-width space after each slash lets
@@ -81,11 +89,21 @@ ColumnLayout {
                 contentItem: RowLayout {
                     spacing: Kirigami.Units.smallSpacing
 
+                    QQC2.CheckBox {
+                        checked: baseListItem.folderEnabled
+                        onToggled: root.folderEnabledToggled(baseListItem.modelData, checked)
+                        QQC2.ToolTip.visible: hovered
+                        QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Use this folder in the slideshow")
+                        QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                    }
+
                     Kirigami.TitleSubtitle {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
+                        opacity: baseListItem.folderEnabled ? 1 : 0.5
                         title: baseListItem.text
                         subtitle: baseListItem.subtitle
+                        selected: baseListItem.highlighted
                     }
 
                     QQC2.ToolButton {
@@ -135,6 +153,7 @@ ColumnLayout {
                     list.push(f);
                     root.pathsEdited(list);
                 }
+                root.folderSelected(f);
                 folderDialogLoader.active = false;
             }
             onRejected: folderDialogLoader.active = false

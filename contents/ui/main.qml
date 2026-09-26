@@ -325,7 +325,7 @@ WallpaperItem {
 
     function _configSignature() {
         return [JSON.stringify(cfg.SpanPaths || []), JSON.stringify(cfg.SinglePaths || []),
-                cfg.SlideInterval, cfg.SlideshowOrder || 0].join("|");
+                JSON.stringify(cfg.DisabledPaths || []), cfg.SlideInterval, cfg.SlideshowOrder || 0].join("|");
     }
 
     // The folders are scanned again on every tick, so images added to or
@@ -342,12 +342,16 @@ WallpaperItem {
         _scanGeneration = _scanGeneration + 1;
         var gen = _scanGeneration;
         var jobs = [];
-        (cfg.SpanPaths || []).forEach(function (f) {
-            jobs.push({ kind: "span", folder: f, gen: gen });
-        });
-        (cfg.SinglePaths || []).forEach(function (f) {
-            jobs.push({ kind: "single", folder: f, gen: gen });
-        });
+        var disabled = cfg.DisabledPaths || [];
+        function add(kind) {
+            return function (f) {
+                if (disabled.indexOf(f) === -1) {
+                    jobs.push({ kind: kind, folder: f, gen: gen });
+                }
+            };
+        }
+        (cfg.SpanPaths || []).forEach(add("span"));
+        (cfg.SinglePaths || []).forEach(add("single"));
         _scanResults = [];
         _scanPending = jobs.length;
         _scanJobs = jobs;
@@ -393,7 +397,7 @@ WallpaperItem {
     // each edit; whichever screen has the newest stamp wins, and the others
     // copy its values into their own config, so the dialog on any screen
     // shows (and edits) the same settings.
-    readonly property var sharedKeys: ["SpanPaths", "SinglePaths", "SlideInterval", "SlideshowOrder", "SpanFit",
+    readonly property var sharedKeys: ["SpanPaths", "SinglePaths", "DisabledPaths", "SlideInterval", "SlideshowOrder", "SpanFit",
         "MatchPhysicalSize", "ShowWallpaperHeader", "ShowOpenImageAction",
         "ShowNextAction", "ShowNextIndividualAction", "ShowNextSpannedAction"]
 
