@@ -99,7 +99,8 @@ is shown below them.
 
 Each folder has a tickbox: untick it to leave the folder out of the
 slideshow without removing it. Click a folder to see its pictures on the
-right, and double-click a picture to open it. The folder button opens the
+right, in the chosen order (shuffled for **Random**), and double-click a
+picture to open it. The folder button opens the
 folder in your file manager.
 
 ### How spanned pictures are fitted

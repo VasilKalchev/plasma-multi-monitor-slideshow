@@ -25,12 +25,41 @@ ColumnLayout {
 
     property string folder: ""
     property bool isSpan: false
-    // SlideshowOrder; the random order is shown A to Z.
+    // SlideshowOrder. Random shows the images shuffled: a new shuffle for
+    // each folder and each change to it, not the slideshow's own sequence.
     property int order: 0
     // Unticked folders are dimmed.
     property bool folderEnabled: true
 
     readonly property var files: folderModels.object
+
+    // The rows of `files` in the order the grid shows them. The grid can't
+    // reorder a FolderListModel, so it shows this list instead and reads
+    // each cell's file from `files`; any change to `files` rebuilds it.
+    property int filesRevision: 0
+    Connections {
+        target: root.files
+        function onRowsInserted() { root.filesRevision++; }
+        function onRowsRemoved() { root.filesRevision++; }
+        function onModelReset() { root.filesRevision++; }
+    }
+    readonly property var rows: {
+        root.filesRevision;
+        const count = root.files ? root.files.count : 0;
+        const list = [];
+        for (let i = 0; i < count; i++) {
+            list.push(i);
+        }
+        if (root.order === 0) {
+            for (let i = count - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const swap = list[i];
+                list[i] = list[j];
+                list[j] = swap;
+            }
+        }
+        return list;
+    }
 
     // Thumbnail shape: spanned folders take the shape of the whole row of
     // screens, individual folders the shape of this screen.
@@ -181,7 +210,7 @@ ColumnLayout {
 
     // A fresh model per folder, with `folder` fixed at construction:
     // reassigning `folder` on a live FolderListModel can deliver the old
-    // folder's rows (see "Folder scanning" in CLAUDE.md).
+    // folder's rows (see "FolderListModel" in AGENTS.md).
     Instantiator {
         id: folderModels
         model: root.folder !== "" ? [root.folder] : []
@@ -270,7 +299,7 @@ ColumnLayout {
 
                 clip: true
                 opacity: root.folderEnabled ? 1 : 0.5
-                model: root.files
+                model: root.rows
                 cellWidth: Math.floor(width / columns)
                 cellHeight: Math.round(cellWidth / root.thumbAspect)
 
@@ -278,9 +307,11 @@ ColumnLayout {
                     id: cell
 
                     required property int index
-                    required property url fileUrl
-                    required property string fileName
-                    required property var fileModified
+                    // The file's row in root.files.
+                    required property int modelData
+                    readonly property url fileUrl: root.files ? root.files.get(modelData, "fileUrl") : ""
+                    readonly property string fileName: root.files ? root.files.get(modelData, "fileName") : ""
+                    readonly property var fileModified: root.files ? root.files.get(modelData, "fileModified") : undefined
 
                     // 0 = waiting for grid.pump(), 1 = loading, 2 = done
                     property int thumbState: 0

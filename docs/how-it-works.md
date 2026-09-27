@@ -118,7 +118,9 @@ them right away.
 ## The settings page
 
 The page lists the individual and spanning folders on the left, and a
-thumbnail grid of the selected folder on the right. Thumbnails come from
+thumbnail grid of the selected folder on the right, in the chosen order.
+For Random the grid is shuffled whenever the folder or its contents
+change; it's not the slideshow's own sequence. Thumbnails come from
 the plugin's own cache, or from the thumbnails your file manager already
 made (the freedesktop cache in `~/.cache/thumbnails`). A picture with
 neither is decoded once at thumbnail size and saved as a small JPEG in
