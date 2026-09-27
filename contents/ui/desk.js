@@ -73,7 +73,7 @@ function screenCount(screens) {
 // touching (any pixel gap is kept); vertically, a screen keeps its
 // relative alignment against the reference - top, centered, bottom, or
 // anything in between - measured as a fraction of the height difference.
-// This assumes one row of screens, like the pre-split format itself.
+// This assumes one row of screens, like the full-width format itself.
 function layout(screens, matchPhysicalSize, sizes) {
     var list = [];
     var known = true;
@@ -84,7 +84,7 @@ function layout(screens, matchPhysicalSize, sizes) {
         known = known && d.density > 0;
     }
     // The reference is the largest screen: by its real size when every
-    // screen's size is known, else by pixel count. A pre-split image's
+    // screen's size is known, else by pixel count. A full-width image's
     // slices are sized to it (see main.qml's computeGeomFor()), so every
     // other screen has to fit inside one slice; by pixel count alone, a big
     // screen with few pixels (a TV) overflowed its slice.

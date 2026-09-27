@@ -37,9 +37,9 @@
         <p>With "Same physical size on every monitor" on, a monitor with bigger pixels takes more room than its pixel count suggests, so the picture keeps its real size on every monitor. Monitors stay touching, and each keeps its vertical alignment from Display Configuration.</p>
       </div>
       <div class="rule">
-        <span class="eyebrow">Pre-split pictures</span>
+        <span class="eyebrow">Full-width pictures</span>
         <b>One slice per monitor</b>
-        <p>If cutting the picture into one slice per monitor gives monitor-shaped slices (within 3%), each slice goes to one monitor, with the joins on the bezels.</p>
+        <p>A picture as wide as all of the monitors together: cut into one slice per monitor, each slice has a monitor's shape (within 3%). Each slice goes to one monitor, with the joins on the bezels.</p>
       </div>
       <div class="rule">
         <span class="eyebrow">Panoramas</span>
@@ -257,7 +257,7 @@
     patternCache.set(key, c);
     return c;
   }
-  // A picture made of monitor-shaped parts gets its joins drawn, so you can
+  // A full-width picture gets its joins drawn, so you can
   // see where they land.
   function seamsFor(iw, ih) {
     for (let n = 2; n <= MAX_MONS; n++) {
@@ -332,13 +332,13 @@
       out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't a monitor shape. So it's a panorama. ` : ""}Centered on the ${n % 2 === 0 ? "middle join" : "middle monitor"} and on the middle of ${refName}, it has to cover a <span class="num">${R(b.w)}×${R(b.h)}</span> box (<span class="num">${ar(b.w / b.h)}</span>, in ${ref.name}'s pixels) to reach every monitor. ${cut(b)}</p>`);
     } else if (A.kind === "split") {
       out.push(n > 1
-        ? `<p>Cut into ${n} slices, each is <span class="num">${ar((iw / n) / ih)}</span>, within 3% of the monitors' shape. So it's pre-split: one slice per monitor, placed so the slice of ${refName} sits exactly on it. The other monitors show the part of their slice they physically cover.</p>`
+        ? `<p>Cut into ${n} slices, each is <span class="num">${ar((iw / n) / ih)}</span>, within 3% of the monitors' shape. So it's full-width: one slice per monitor, placed so the slice of ${refName} sits exactly on it. The other monitors show the part of their slice they physically cover.</p>`
         : `<p>The picture has the monitor's shape (within 3%), so it fills the monitor.</p>`);
     } else if (A.kind === "pano") {
       const b = A.desk.box;
       out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't a monitor shape. So it's one panorama, scaled` : "It's scaled"} to cover the <span class="num">${R(b.w)}×${R(b.h)}</span> box around ${n > 1 ? "all monitors" : "the monitor"} (<span class="num">${ar(b.w / b.h)}</span>). ${cut(b)}</p>`);
     } else {
-      out.push(`<p>Your monitors have different shapes, and each runs the pre-split test against its own shape: this picture is pre-split for some and a panorama for others. Expect a mismatch at the joins.</p>`);
+      out.push(`<p>Your monitors have different shapes, and each runs the full-width test against its own shape: this picture is full-width for some and a panorama for others. Expect a mismatch at the joins.</p>`);
     }
     const tot = A.per.reduce((s, q) => s + (q.reg ? q.reg.src.w * q.reg.src.h : 0), 0) / (iw * ih);
     out.push(`<ul>${A.per.map(q => q.reg
@@ -347,7 +347,7 @@
     return out.join("");
   }
 
-  const KIND_CHIP = { join: ["pano", "Panorama on the join"], split: ["split", "Pre-split"], pano: ["pano", "Panorama"], mixed: ["pano", "Mixed"] };
+  const KIND_CHIP = { join: ["pano", "Panorama on the join"], split: ["split", "Full-width"], pano: ["pano", "Panorama"], mixed: ["pano", "Mixed"] };
   function renderCase(host, spec) {
     const A = analyse(spec.iw, spec.ih), [cls, txt] = KIND_CHIP[A.kind];
     host.innerHTML = `
@@ -429,11 +429,11 @@
     let html = `<div class="track"></div>`;
     shapes.forEach(m => { const x = n * m * 0.97, y = n * m * 1.03; html += `<div class="band" style="left:${P(x)};width:calc(${P(y)} - ${P(x)})"></div>`; });
     html += `<div class="fit" style="left:${P(fa)}"></div>`;
-    const legend = `<span><i class="sw" style="background:var(--chip-split-ink)"></i>pre-split range</span><span><i class="sw" style="background:var(--chip-pano);border:1px solid var(--line)"></i>panorama</span><span><i class="sw" style="background:var(--ink);width:2px"></i>${ar(fa)} panorama fits exactly</span>`;
+    const legend = `<span><i class="sw" style="background:var(--chip-split-ink)"></i>full-width range</span><span><i class="sw" style="background:var(--chip-pano);border:1px solid var(--line)"></i>panorama</span><span><i class="sw" style="background:var(--ink);width:2px"></i>${ar(fa)} panorama fits exactly</span>`;
     const pano = `Anything else is a panorama${state.join ? ", centered on the join" : ""}: narrower than <span class="num">${ar(fa)}</span> loses top and bottom, wider loses the sides.`;
     const note = shapes.length === 1
-      ? `With ${n} monitor${n > 1 ? "s" : ""}, anything between <span class="num">${ar(n * shapes[0] * 0.97)}</span> and <span class="num">${ar(n * shapes[0] * 1.03)}</span> is pre-split. ${pano}`
-      : `Your monitors have different shapes, so each runs the pre-split test for its own shape (one band each). ${pano}`;
+      ? `With ${n} monitor${n > 1 ? "s" : ""}, anything between <span class="num">${ar(n * shapes[0] * 0.97)}</span> and <span class="num">${ar(n * shapes[0] * 1.03)}</span> is full-width. ${pano}`
+      : `Your monitors have different shapes, so each runs the full-width test for its own shape (one band each). ${pano}`;
     [16, 21, 32, 48, 64].forEach(w => { if (w / 9 > lo && w / 9 <= hi) html += `<span class="tick" style="left:${P(w / 9)}">${w}:9</span>`; });
     EXAMPLES.forEach((e, i) => { html += `<span class="mk" style="left:${P(e.iw / e.ih)}">${i + 1}</span>`; });
     const c = state.custom; html += `<span class="mk" style="left:${P(c.iw / c.ih)};color:var(--accent)">yours</span>`;

@@ -32,7 +32,7 @@ WallpaperItem {
 
     readonly property var cfg: root.configuration
 
-    // SpanFit: where a panorama (a spanned image that isn't pre-split, see
+    // SpanFit: where a panorama (a spanned image that isn't full-width, see
     // computeGeomFor()) is centered: 0 = on the box around all monitors,
     // 1 = on the join between the monitors (and vertically on the largest
     // screen).
@@ -541,11 +541,11 @@ WallpaperItem {
         }
 
         if (probeSize.width > 0 && probeSize.height > 0) {
-            // Some "span" wallpapers are pre-composed as N equal-width
-            // halves/thirds/etc., one per monitor (common for "dual
-            // monitor wallpaper" packs), rather than one continuous
-            // panorama. When a 1/N-wide slice of the image already has
-            // this screen's own aspect ratio, treat it that way.
+            // A full-width image is as wide as all N screens together
+            // (the "dual monitor wallpaper" packs), rather than a panorama
+            // of some other shape: a 1/N-wide slice of it has this
+            // screen's own aspect ratio. Each slice then goes to one
+            // screen.
             var unitW = probeSize.width / n;
             var unitAspect = unitW / probeSize.height;
             var myAspect = me.w / me.h;
@@ -576,10 +576,10 @@ WallpaperItem {
         // A continuous panorama: cover-fit (PreserveAspectCrop) onto a box
         // on the desk, then crop out this screen. By default the box around
         // every screen, which cuts off the least. Centered on the join, the
-        // image's middle stays on the middle bezel, like a pre-split
+        // image's middle stays on the middle bezel, like a full-width
         // image's seam, even when the screens differ in size: for two-part
         // images made for other monitor shapes (two 16:10 halves on 16:9
-        // screens), which the pre-split test above doesn't take.
+        // screens), which the full-width test above doesn't take.
         return toLocal(root.spanFit === 1 ? Desk.joinBox(desk) : desk.box, false);
     }
 

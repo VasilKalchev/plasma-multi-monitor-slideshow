@@ -23,9 +23,10 @@ the same moment.
   pixel sizes (say a 24" 1080p next to a 27" 1440p), a spanned picture is
   scaled per monitor, so it keeps its real size and straight lines continue
   across the bezel. A monitor that reports a wrong size can be corrected.
-- **Pre-split wallpapers land on the right monitors.** A wallpaper made of
-  one part per monitor is detected, and each part goes to its own monitor
-  with the join on the bezel. Anything else is shown as one panorama.
+- **Full-width wallpapers land on the right monitors.** A wallpaper as wide
+  as all of your monitors together (such as 32:9 on two 16:9 monitors) is
+  detected, and each monitor shows its own part, with the join on the
+  bezel. Anything else is shown as one panorama.
 - **Slideshow order:** random, by name (A to Z, Z to A) or by date
   modified (newest or oldest first).
 - **A settings page like the built-in Slideshow's:** folder lists with
@@ -91,7 +92,7 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 | **Context Menu…** | Which entries the desktop's right-click menu shows. |
 | **Same physical size on every monitor** | Scales spanned pictures per monitor, so they have the same real size on monitors with different pixel sizes, and lines continue straight across the bezel. |
 | **Monitor Sizes…** | The size of each monitor, as it reports it. Correct a monitor that reports a wrong size here. |
-| **Center panoramas on the bezel between the monitors** | Where a panorama, a spanned picture that isn't pre-split, is centered. Pre-split pictures always split on the bezel. See below. |
+| **Center panoramas on the bezel between the monitors** | Where a panorama, a spanned picture that isn't full-width, is centered. Full-width pictures always split on the bezel. See below. |
 
 The spanned-picture settings are grayed out when they make no difference,
 for example when your monitors are identical and lined up, and the reason
@@ -110,10 +111,11 @@ Configuration, then cut to what each monitor covers. With **Same physical
 size on every monitor** on, it is placed by the monitors' real sizes
 instead of their pixel counts.
 
-**Pre-split pictures:** the plugin cuts the picture into one equal slice
-per monitor. If a slice has the shape of your monitor (within 3%), the
-picture is pre-split, and each slice goes to its own monitor. For example,
-a 5120×1440 picture on two 16:9 monitors is two 2560×1440 slices, one per
+**Full-width pictures** are as wide as all of your monitors together. To
+find them, the plugin cuts the picture into one equal slice per monitor:
+if a slice has the shape of your monitor (within 3%), the picture is
+full-width, and each slice goes to its own monitor. For example, a
+5120×1440 picture on two 16:9 monitors is two 2560×1440 slices, one per
 monitor.
 
 **Panoramas:** any other picture is scaled, keeping its shape, until it
@@ -132,16 +134,16 @@ Some examples:
   for two 1440p monitors, or 3840×1080 for two 1080p ones) fits exactly. A
   wider picture loses its left and right edges, a narrower one its top and
   bottom.
-- **Monitors of different sizes:** with a pre-split picture, the largest
+- **Monitors of different sizes:** with a full-width picture, the largest
   monitor shows its slice in full. A smaller monitor shows the part of its
   slice it physically covers, so it loses a bit of its outer edge and its
   top or bottom, never the edge at the join. Its vertical position in
   Display Configuration decides which: a monitor aligned to the top of the
   larger one shows the top of its slice.
-- **Three or more monitors:** the same rules apply. A pre-split picture
-  needs to have been made for that many monitors: a two-part wallpaper on
-  three monitors is shown as a panorama, and its join lands in the middle
-  of the middle monitor.
+- **Three or more monitors:** the same rules apply. A full-width picture
+  has to be as wide as that many monitors: a two-monitor wallpaper is too
+  narrow for three, so it's shown as a panorama, and its join lands in the
+  middle of the middle monitor.
 - **One monitor:** spanned pictures behave like individual ones.
 
 To try your own monitors and pictures, open the

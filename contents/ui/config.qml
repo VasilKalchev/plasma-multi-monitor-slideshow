@@ -393,7 +393,7 @@ ColumnLayout {
 
             QQC2.ToolTip.visible: hovered
             QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-            QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "A panorama is a spanned image that isn't made of one part per monitor. Images that are, such as a 32:9 image on two 16:9 monitors, always split on the bezels, whatever this is set to. Off: a panorama is centered on your monitors as a whole, which cuts off the least. On: its middle goes on the bezel between the two middle monitors (with an odd number, on the middle monitor's center), so a two-part wallpaper made for other monitors, such as two 16:10 halves, still splits on the bezel. More is cut off at the edges.")
+            QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "A panorama is a spanned image that isn't as wide as all of your monitors together. Full-width images, such as a 32:9 image on two 16:9 monitors, always split on the bezels, whatever this is set to. Off: a panorama is centered on your monitors as a whole, which cuts off the least. On: its middle goes on the bezel between the two middle monitors (with an odd number, on the middle monitor's center), so a two-part wallpaper made for other monitors, such as two 16:10 halves, still splits on the bezel. More is cut off at the edges.")
         }
 
         QQC2.Label {

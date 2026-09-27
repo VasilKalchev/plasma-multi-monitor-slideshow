@@ -95,7 +95,7 @@ script refuses to replace a folder that is a git checkout.
   picture, measured. A geometry change makes both layers decode again; if
   any Ready could take over, the faded-out layer's old picture came back.
   A layer that has faded out lets go of its picture.
-- **Pre-split layers use `Image.Stretch`**, not `PreserveAspectCrop`: the
+- **Full-width layers use `Image.Stretch`**, not `PreserveAspectCrop`: the
   latter re-crops around the layer's own center, which drifts the seam off
   the bezel on every screen but the largest.
 - **Probes** decode at `sourceSize: Qt.size(1024, 0)`, and the natural

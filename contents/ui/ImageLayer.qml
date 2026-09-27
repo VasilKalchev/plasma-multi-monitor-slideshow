@@ -27,7 +27,7 @@ Image {
     y: geom.y
     width: geom.w
     height: geom.h
-    // Stretch for the pre-split branch of computeGeomFor() (see its
+    // Stretch for the full-width branch of computeGeomFor() (see its
     // "stretch: true" comment) - PreserveAspectCrop there would silently
     // re-crop around this box's own center, which isn't this screen's own
     // display window whenever it's non-zero.
@@ -41,7 +41,7 @@ Image {
     }
 
     // Loads a spanned picture on its own, to learn its true shape (needed
-    // to tell a pre-split picture apart from a panorama; see
+    // to tell a full-width picture apart from a panorama; see
     // computeGeomFor()). Only the width/height ratio is ever used, so a
     // thumbnail is enough: decoding at native resolution cost up to
     // hundreds of MB of RGBA for a large panorama, once per screen, to read

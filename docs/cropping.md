@@ -66,17 +66,18 @@ layout.
 
 ## Step 2: place the image on the desk
 
-### Pre-split images
+### Full-width images
 
 The image is cut into as many equal slices as there are monitors. If a
-slice has the monitor's shape (within 3%), the image is pre-split: each
+slice has the monitor's shape (within 3%), the image is full-width, as
+wide as the monitors together: each
 slice is one unit the size of the largest monitor on the desk, placed so
 the largest monitor's own slice sits exactly on it. Every other monitor is
 physically smaller, so it fits inside its slice and shows the part of it
 that it covers. These layers use `Image.Stretch`, not `PreserveAspectCrop`
 (see the comment in `computeGeomFor()` for why).
 
-A two-part 32:9 image (for example 5120x1440 or 3840x1080) is pre-split on
+A two-part 32:9 image (for example 5120x1440 or 3840x1080) is full-width on
 the example monitors. Each slice is 2560 x 1440 desk pixels, and the right
 monitor's slice sits on it, so the image covers desk x −640 to 4480 and
 its middle seam lands on the bezel:
@@ -86,13 +87,13 @@ its middle seam lands on the bezel:
   covers desk x −266 to 1920, so it loses the left 374 px of that half
   (15%), and 120 px at the top and 90 px at the bottom.
 
-Each monitor runs the pre-split test against its own shape. If the
+Each monitor runs the full-width test against its own shape. If the
 monitors have different shapes (say a 16:9 and a 16:10), a picture can be
-pre-split for one and a panorama for the other, and the halves won't line
+full-width for one and a panorama for the other, and the halves won't line
 up at the join.
 
-A pre-split image is only recognized at the monitor count it was made for.
-A two-part image on three monitors is cut into three slices that don't
+An image is only full-width for the monitor count it was made for. A
+two-part image is too narrow for three monitors: its three slices don't
 match any monitor, so it becomes a panorama.
 
 ### Panoramas
@@ -117,7 +118,7 @@ around that point that covers every monitor: the right monitor reaches
 - The 21:9 image becomes 5120 wide and 2143 tall, so it loses about 16% at
   the top and 16% at the bottom.
 - A two-part image made for other monitors, like two 16:10 halves
-  (3840x1200), isn't pre-split on 16:9 monitors, but its seam still lands
+  (3840x1200), isn't full-width on 16:9 monitors, but its seam still lands
   on the bezel. It becomes 5120 x 1600, losing 5% at the top and 5% at the
   bottom. With the setting off, its seam would land 187 desk pixels into
   the right monitor.
