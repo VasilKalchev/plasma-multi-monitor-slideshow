@@ -3,13 +3,13 @@
     Lists the same files the wallpaper uses (flat, same name filters), in
     the order the settings pick. Double-click opens an image.
 
-    Thumbnails come from the freedesktop thumbnail cache when Dolphin or a
-    file dialog has made one, else from this plugin's own cache. An image
-    in neither is decoded once at thumbnail size, drawn, grabbed with
-    grabToImage() and saved to the plugin's cache as a small JPEG. QML
-    can't write freedesktop thumbnails (they need PNG metadata) or create
-    directories, so the cache directory is made with `mkdir -p` through
-    the "executable" data engine.
+    Thumbnails come from this plugin's own cache, else from the
+    freedesktop thumbnail cache when Dolphin or a file dialog has made
+    one. An image in neither is decoded once at thumbnail size, drawn,
+    grabbed with grabToImage() and saved to the plugin's cache as a small
+    JPEG. QML can't write freedesktop thumbnails (they need PNG metadata)
+    or create directories, so the cache directory is made with `mkdir -p`
+    through the "executable" data engine.
 */
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -33,9 +33,12 @@ ColumnLayout {
 
     readonly property var files: folderModels.object
 
-    // The rows of `files` in the order the grid shows them. The grid can't
-    // reorder a FolderListModel, so it shows this list instead and reads
-    // each cell's file from `files`; any change to `files` rebuilds it.
+    // The rows of `files` in the order the grid shows them: shuffled for
+    // Random, else sorted like the slideshow (SpanState.compareImages()).
+    // FolderListModel's own sorting puts upper-case names first, so it
+    // isn't used. The grid can't reorder a FolderListModel, so it shows
+    // this list instead and reads each cell's file from `files`; any
+    // change to `files` rebuilds it.
     property int filesRevision: 0
     Connections {
         target: root.files
@@ -45,7 +48,8 @@ ColumnLayout {
     }
     readonly property var rows: {
         root.filesRevision;
-        const count = root.files ? root.files.count : 0;
+        const files = root.files;
+        const count = files ? files.count : 0;
         const list = [];
         for (let i = 0; i < count; i++) {
             list.push(i);
@@ -57,6 +61,23 @@ ColumnLayout {
                 list[i] = list[j];
                 list[j] = swap;
             }
+        } else {
+            const keys = list.map(i => {
+                const modified = files.get(i, "fileModified");
+                return {
+                    name: String(files.get(i, "fileName")).toLowerCase(),
+                    time: modified instanceof Date ? modified.getTime() : 0,
+                    url: String(files.get(i, "fileUrl"))
+                };
+            });
+            list.sort((a, b) => {
+                const ka = keys[a], kb = keys[b];
+                const c = root.order === 1 ? ka.name.localeCompare(kb.name)
+                        : root.order === 2 ? -ka.name.localeCompare(kb.name)
+                        : root.order === 3 ? kb.time - ka.time
+                        : ka.time - kb.time;
+                return c !== 0 ? c : (ka.url < kb.url ? -1 : (ka.url > kb.url ? 1 : 0));
+            });
         }
         return list;
     }
@@ -221,8 +242,6 @@ ColumnLayout {
             showFiles: true
             caseSensitive: false
             nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.bmp"]
-            sortField: (root.order === 3 || root.order === 4) ? FolderListModel.Time : FolderListModel.Name
-            sortReversed: root.order === 2 || root.order === 4
         }
     }
 
