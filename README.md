@@ -1,9 +1,9 @@
 # Multi-monitor Slideshow
 
-![Two monitors showing one picture spanned across both, and the same two monitors showing a different picture each](docs/images/preview.png)
+![Two monitors showing one image spanned across both, and the same two monitors showing a different image each](docs/images/preview.png)
 
 A wallpaper plugin for KDE Plasma 6 that runs one slideshow across all of
-your monitors, with two kinds of pictures:
+your monitors, with two kinds of images:
 
 - **Spanned images** stretch across every monitor together, like the
   "Span" wallpaper mode on Windows. Use them for panoramas and for
@@ -17,10 +17,10 @@ the same moment.
 ## Features
 
 - **Any number of monitors, of any size.** Monitors can have different
-  resolutions, sizes and heights. A spanned picture is laid out over your
+  resolutions, sizes and heights. A spanned image is laid out over your
   monitors as they are arranged in Display Configuration.
 - **Same physical size on every monitor.** On monitors with different
-  pixel sizes (say a 24" 1080p next to a 27" 1440p), a spanned picture is
+  pixel sizes (say a 24" 1080p next to a 27" 1440p), a spanned image is
   scaled per monitor, so it keeps its real size and straight lines continue
   across the bezel. A monitor that reports a wrong size can be corrected.
 - **Full-width wallpapers land on the right monitors.** A wallpaper as wide
@@ -35,7 +35,7 @@ the same moment.
 - **Desktop right-click menu:** Open Image, Next, Next Individual and
   Next Spanned. Each entry can be hidden.
 - **Settings are shared by all monitors.** Change them from any monitor.
-- **Smooth crossfades** between pictures, and new images in your folders
+- **Smooth crossfades** between images, and new images in your folders
   are picked up at the next change.
 
 ## Install
@@ -76,11 +76,11 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 2. Set **Wallpaper type** to **Multi-monitor Slideshow**.
 3. Add folders:
    - **Individual folders** for ordinary wallpapers, one per monitor.
-   - **Spanning folders** for wide pictures that go across all monitors.
+   - **Spanning folders** for wide images that go across all monitors.
 
    Folders are read one level deep (subfolders are not included). JPEG,
    PNG, WebP and BMP images are used.
-4. Choose how often the picture changes and in which order, then click
+4. Choose how often the image changes and in which order, then click
    **Apply**.
 
 ### Settings
@@ -89,44 +89,44 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 
 | Setting | What it does |
 |---|---|
-| **Change every** | How long each picture stays up. |
-| **Order** | **Random** shuffles all pictures, spanned and individual together. **A to Z**, **Z to A**, **Newest first** and **Oldest first** go through them by file name or date modified. On an individual turn, the monitors show the next pictures in line, left to right. |
+| **Change every** | How long each image stays up. |
+| **Order** | **Random** shuffles all images, spanned and individual together. **A to Z**, **Z to A**, **Newest first** and **Oldest first** go through them by file name or date modified. On an individual turn, the monitors show the next images in line, left to right. |
 | **Context Menu…** | Which entries the desktop's right-click menu shows. |
-| **Same physical size on every monitor** | Scales spanned pictures per monitor, so they have the same real size on monitors with different pixel sizes, and lines continue straight across the bezel. |
+| **Same physical size on every monitor** | Scales spanned images per monitor, so they have the same real size on monitors with different pixel sizes, and lines continue straight across the bezel. |
 | **Monitor Sizes…** | The size of each monitor, as it reports it. Correct a monitor that reports a wrong size here. |
-| **Always center on the bezel between the monitors** | Off by default. Full-width pictures are always centered on the bezel; with this on, panoramas are too, instead of on your monitors as a whole. See below. |
+| **Always center on the bezel between the monitors** | Off by default. Full-width images are always centered on the bezel; with this on, panoramas are too, instead of on your monitors as a whole. See below. |
 
-The spanned-picture settings are grayed out when they make no difference,
+The spanned-image settings are grayed out when they make no difference,
 for example when your monitors are identical and lined up, and the reason
 is shown below them.
 
 Each folder has a tickbox: untick it to leave the folder out of the
-slideshow without removing it. Click a folder to see its pictures on the
+slideshow without removing it. Click a folder to see its images on the
 right, in the chosen order (shuffled for **Random**), and double-click a
-picture to open it. The folder button opens the
+image to open it. The folder button opens the
 folder in your file manager.
 
-### How spanned pictures are fitted
+### How spanned images are fitted
 
-A spanned picture is placed over your monitors as they sit in Display
+A spanned image is placed over your monitors as they sit in Display
 Configuration, then cut to what each monitor covers. With **Same physical
 size on every monitor** on, it is placed by the monitors' real sizes
 instead of their pixel counts.
 
-**Full-width pictures** are as wide as all of your monitors together. To
-find them, the plugin cuts the picture into one equal slice per monitor:
-if a slice has the shape of your monitor (within 3%), the picture is
+**Full-width images** are as wide as all of your monitors together. To
+find them, the plugin cuts the image into one equal slice per monitor:
+if a slice has the shape of your monitor (within 3%), the image is
 full-width, and each slice goes to its own monitor. For example, a
-5120×1440 picture on two 16:9 monitors is two 2560×1440 slices, one per
+5120×1440 image on two 16:9 monitors is two 2560×1440 slices, one per
 monitor.
 
-**Panoramas:** any other picture is scaled, keeping its shape, until it
+**Panoramas:** any other image is scaled, keeping its shape, until it
 covers all monitors, and the overhang is cut evenly. It's centered on your
 monitors as a whole, which cuts off the least. With **Always center on
 the bezel between the monitors**, its middle goes on the bezel between the
 two middle monitors (on the middle monitor's center with an odd count) and
 on the middle of your largest monitor vertically. That keeps a two-part
-picture made for other monitors split on the bezel, such as two 16:10
+image made for other monitors split on the bezel, such as two 16:10
 halves on two 16:9 monitors, but more is cut off at the edges. With
 identical monitors lined up side by side, both give the same result.
 
@@ -134,21 +134,26 @@ Some examples:
 
 - **Two identical monitors:** a two-part wallpaper (for example 5120×1440
   for two 1440p monitors, or 3840×1080 for two 1080p ones) fits exactly. A
-  wider picture loses its left and right edges, a narrower one its top and
+  wider image loses its left and right edges, a narrower one its top and
   bottom.
-- **Monitors of different sizes:** with a full-width picture, the largest
-  monitor shows its slice in full. A smaller monitor shows the part of its
-  slice it physically covers, so it loses a bit of its outer edge and its
-  top or bottom, never the edge at the join. Its vertical position in
-  Display Configuration decides which: a monitor aligned to the top of the
-  larger one shows the top of its slice.
-- **Three or more monitors:** the same rules apply. A full-width picture
+- **Monitors of different sizes:** with a full-width image, the largest
+  monitor shows its slice in full. A smaller monitor next to it shows the
+  part of its slice it physically covers, so it loses a bit of its outer
+  edge and its top or bottom, never the edge at the join. Its vertical
+  position in Display Configuration decides which: a monitor aligned to
+  the top of the larger one shows the top of its slice.
+- **Three or more monitors:** the same rules apply. A full-width image
   has to be as wide as that many monitors: a two-monitor wallpaper is too
   narrow for three, so it's shown as a panorama, and its join lands in the
-  middle of the middle monitor.
-- **One monitor:** spanned pictures behave like individual ones.
+  middle of the middle monitor. If the monitors differ in size, only the
+  joins next to the largest monitor are sure to land on a bezel: two
+  smaller monitors side by side are narrower than their two slices, so the
+  join between those slices lands inside the outer one. On 24" + 24" + 27"
+  1440p monitors, for example, the join between the two left parts lands
+  240 px inside the leftmost monitor.
+- **One monitor:** spanned images behave like individual ones.
 
-To try your own monitors and pictures, open the
+To try your own monitors and images, open the
 [interactive explanation](https://vasilkalchev.github.io/plasma-multi-monitor-slideshow/cropping.html).
 [docs/cropping.md](docs/cropping.md) works through the math.
 
@@ -156,10 +161,10 @@ To try your own monitors and pictures, open the
 
 | Entry | What it does |
 |---|---|
-| **Open Image** | Opens the picture on that monitor in your image viewer. |
-| **Next** | Skips to the next picture in the slideshow. |
-| **Next Individual** | Skips ahead to the next turn of individual pictures. |
-| **Next Spanned** | Skips ahead to the next spanned picture. |
+| **Open Image** | Opens the image on that monitor in your image viewer. |
+| **Next** | Skips to the next image in the slideshow. |
+| **Next Individual** | Skips ahead to the next turn of individual images. |
+| **Next Spanned** | Skips ahead to the next spanned image. |
 
 **Open Image** and **Next** are shown by default; the others can
 be turned on in **Context Menu…**, together with a grayed-out "Wallpaper"
@@ -170,7 +175,14 @@ label above them.
 - Spanning expects the monitors side by side in one row. They can have
   different heights and vertical positions, but monitors stacked above one
   another are not supported.
-- Settings changed while the slideshow runs take effect at the next picture
+- Monitors of different shapes (say a 16:9 next to a 16:10) can disagree
+  about an image: each one checks whether the image is full-width against
+  its own shape, so it can be full-width on one and a panorama on the
+  other, and then the two don't line up at the join.
+- Nothing is hidden behind the bezels: the image goes straight on from one
+  monitor's edge to the next one's. Horizontal lines stay straight, but a
+  slanted line looks shifted where it crosses a bezel.
+- Settings changed while the slideshow runs take effect at the next image
   change. **Next** applies them right away.
 
 ## Troubleshooting
@@ -185,7 +197,7 @@ switch the TV off and on, then stop the script with Ctrl+C. It re-applies
 the layout you had when you started it, so KWin saves that layout for every
 combination.
 
-**A monitor shows the picture at the wrong size.** The plugin uses the
+**A monitor shows the image at the wrong size.** The plugin uses the
 physical size each monitor reports, and some report a wrong one (TVs
 especially). Click **Monitor Sizes…** in the settings and enter the
 monitor's real diagonal. An arrow appears next to a corrected size to go

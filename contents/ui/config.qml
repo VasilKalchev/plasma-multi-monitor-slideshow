@@ -313,7 +313,7 @@ ColumnLayout {
 
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Monitors with different pixel sizes show the same picture at different sizes: a 23″ 1080p monitor's pixels are about 14% larger than a 27″ 1440p monitor's. When on, spanned images are scaled per monitor so they have the same real size on every monitor, and lines continue straight across the bezel. This uses the size each monitor reports; correct a wrong one under Monitor Sizes.")
+                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Monitors with different pixel sizes show the same image at different sizes: a 23″ 1080p monitor's pixels are about 14% larger than a 27″ 1440p monitor's. When on, spanned images are scaled per monitor so they have the same real size on every monitor, and lines continue straight across the bezel. This uses the size each monitor reports; correct a wrong one under Monitor Sizes.")
             }
 
             QQC2.Button {

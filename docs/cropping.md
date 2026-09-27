@@ -10,7 +10,7 @@ This plugin shows images two ways:
   `contents/ui/desk.js`, and `computeGeomFor()` in `contents/ui/main.qml`.
 
 The [interactive version](https://vasilkalchev.github.io/plasma-multi-monitor-slideshow/cropping.html)
-(`docs/cropping.html`) runs the same math on a monitor layout and pictures of
+(`docs/cropping.html`) runs the same math on a monitor layout and images of
 your choice.
 
 The worked example uses two monitors of different sizes, side by side:
@@ -37,7 +37,7 @@ with the most pixels). Here it's the right monitor. Each monitor gets a factor
 covers.
 
 ```
-f(left)  = 0.265 / 0.233 = 1.1385     -> the left monitor is 1920 x 1.1385 = 2186 by 1080 x 1.1385 = 1230 desk pixels
+f(left)  = 0.26496 / 0.23273 = 1.1385 -> the left monitor is 1920 x 1.1385 = 2186 by 1080 x 1.1385 = 1230 desk pixels
 f(right) = 1                          -> 2560 x 1440 desk pixels
 ```
 
@@ -72,9 +72,12 @@ The image is cut into as many equal slices as there are monitors. If a
 slice has the monitor's shape (within 3%), the image is full-width, as
 wide as the monitors together: each
 slice is one unit the size of the largest monitor on the desk, placed so
-the largest monitor's own slice sits exactly on it. Every other monitor is
-physically smaller, so it fits inside its slice and shows the part of it
-that it covers. These layers use `Image.Stretch`, not `PreserveAspectCrop`
+the largest monitor's own slice sits exactly on it. A monitor next to the
+largest one is physically smaller, so it fits inside its slice, against
+the join, and shows the part of the slice that it covers. Further out,
+that no longer holds: two smaller monitors side by side are narrower than
+their two slices, so the join between those slices lands inside the outer
+monitor. These layers use `Image.Stretch`, not `PreserveAspectCrop`
 (see the comment in `computeGeomFor()` for why).
 
 A two-part 32:9 image (for example 5120x1440 or 3840x1080) is full-width on
@@ -88,7 +91,7 @@ its middle seam lands on the bezel:
   (15%), and 120 px at the top and 90 px at the bottom.
 
 Each monitor runs the full-width test against its own shape. If the
-monitors have different shapes (say a 16:9 and a 16:10), a picture can be
+monitors have different shapes (say a 16:9 and a 16:10), an image can be
 full-width for one and a panorama for the other, and the halves won't line
 up at the join.
 
@@ -143,7 +146,7 @@ left:   image layer 4497 x 1265 at (−329, −106)          in its pixels
 
 A 400 px square in the image therefore measures 400 px on the right
 monitor and 400 / 1.1385 = 351 px on the left one: both 93 mm. A test
-picture with straight lines and squares on both sides of the seam makes
+image with straight lines and squares on both sides of the seam makes
 this easy to check with a ruler.
 
 Every monitor recomputes its placement shortly (1.5 s) after any monitor

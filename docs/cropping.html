@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>How Cropping Works · Multi-monitor Slideshow</title>
-<meta name="description" content="How the Multi-monitor Slideshow wallpaper plugin for KDE Plasma places a spanned picture on your monitors, with your own layout and pictures.">
+<meta name="description" content="How the Multi-monitor Slideshow wallpaper plugin for KDE Plasma places a spanned image on your monitors, with your own layout and images.">
 <link rel="icon" href="images/icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,7 @@
   <header class="page-head">
     <span class="eyebrow">Multi-monitor Slideshow · spanning folders</span>
     <h1>How a spanned wallpaper gets cropped</h1>
-    <p class="lede">Multi-monitor Slideshow places every spanned picture on your monitors as they really sit on your desk, then cuts it to what each monitor covers. Set up your monitors below to see where each part of a picture ends up. The math is the plugin's own.</p>
+    <p class="lede">Multi-monitor Slideshow places every spanned image on your monitors as they really sit on your desk, then cuts it to what each monitor covers. Set up your monitors below to see where each part of an image ends up. The math is the plugin's own.</p>
   </header>
 
   <section class="panel" aria-labelledby="rules-h">
@@ -34,20 +34,20 @@
       <div class="rule">
         <span class="eyebrow">First</span>
         <b>Lay the monitors out by real size</b>
-        <p>With "Same physical size on every monitor" on, a monitor with bigger pixels takes more room than its pixel count suggests, so the picture keeps its real size on every monitor. Monitors stay touching, and each keeps its vertical alignment from Display Configuration.</p>
+        <p>With "Same physical size on every monitor" on, a monitor with bigger pixels takes more room than its pixel count suggests, so the image keeps its real size on every monitor. Monitors stay touching, and each keeps its vertical alignment from Display Configuration.</p>
       </div>
       <div class="rule">
-        <span class="eyebrow">Full-width pictures</span>
+        <span class="eyebrow">Full-width images</span>
         <b>One slice per monitor</b>
-        <p>A picture as wide as all of the monitors together: cut into one slice per monitor, each slice has a monitor's shape (within 3%). Each slice goes to one monitor, with the joins on the bezels.</p>
+        <p>An image as wide as all of the monitors together: cut into one slice per monitor, each slice has a monitor's shape (within 3%). Each slice goes to one monitor. The joins next to the largest monitor land on its bezels; with three or more monitors of different sizes, a join further out can land inside a smaller monitor.</p>
       </div>
       <div class="rule">
         <span class="eyebrow">Panoramas</span>
         <b>Centered, cut to cover</b>
-        <p>Any other picture is scaled, keeping its shape, until every monitor is covered, and the overhang is cut. It's centered on the monitors as a whole, or with "Always center on the bezel between the monitors", on the middle join (the middle monitor's center with an odd count) and on the middle of the largest monitor.</p>
+        <p>Any other image is scaled, keeping its shape, until every monitor is covered, and the overhang is cut. It's centered on the monitors as a whole, or with "Always center on the bezel between the monitors", on the middle join (the middle monitor's center with an odd count) and on the middle of the largest monitor.</p>
       </div>
     </div>
-    <p class="note">Individual (non-spanning) folders are simpler: each monitor fills itself with its own picture, cropped evenly to its own shape.</p>
+    <p class="note">Individual (non-spanning) folders are simpler: each monitor fills itself with its own image, cropped evenly to its own shape.</p>
   </section>
 
   <section class="panel" aria-labelledby="layout-h">
@@ -61,7 +61,7 @@
       <label class="toggle"><input type="checkbox" id="joinToggle"> Always center on the bezel between the monitors</label>
     </div>
     <p class="pitch" id="pitchNote"></p>
-    <div class="ruler" id="ruler" aria-label="Picture shapes, as width to height"></div>
+    <div class="ruler" id="ruler" aria-label="Image shapes, as width to height"></div>
     <div class="legend" id="legend"></div>
     <p class="note" id="rulerNote"></p>
   </section>
@@ -70,7 +70,7 @@
 
   <section class="panel" aria-labelledby="try-h">
     <h2 id="try-h">Try any size</h2>
-    <p class="note">Only the shape matters, not the pixel count. Enter a size, pick a common one, or open one of your own pictures (it stays in your browser).</p>
+    <p class="note">Only the shape matters, not the pixel count. Enter a size, pick a common one, or open one of your own images (it stays in your browser).</p>
     <div class="try-controls">
       <label class="field">Width <input id="tw" type="number" min="1" value="6880" inputmode="numeric"></label>
       <label class="field">Height <input id="th" type="number" min="1" value="1440" inputmode="numeric"></label>
@@ -174,7 +174,7 @@
     const hw = Math.max(cx - b.x, b.x + b.w - cx), hh = Math.max(cy - b.y, b.y + b.h - cy);
     return { x: cx - hw, y: cy - hh, w: 2 * hw, h: 2 * hh };
   }
-  // Where the picture sits on the desk for one monitor: the kind of
+  // Where the image sits on the desk for one monitor: the kind of
   // placement, its box, and desk = origin + source * k.
   function place(desk, me, iw, ih) {
     const n = desk.list.length;
@@ -193,7 +193,7 @@
     const x0 = Math.max(r.x, c.x), y0 = Math.max(r.y, c.y), x1 = Math.min(r.x + r.w, c.x + c.w), y1 = Math.min(r.y + r.h, c.y + c.h);
     return x1 > x0 && y1 > y0 ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
   }
-  // The part of the picture a monitor shows (src, in picture pixels), and
+  // The part of the image a monitor shows (src, in image pixels), and
   // where that lands on the desk (dst).
   function region(me, p, iw, ih) {
     const vis = clipRect({ x: me.dx, y: me.dy, w: me.dw, h: me.dh }, p.box);
@@ -257,7 +257,7 @@
     patternCache.set(key, c);
     return c;
   }
-  // A full-width picture gets its joins drawn, so you can
+  // A full-width image gets its joins drawn, so you can
   // see where they land.
   function seamsFor(iw, ih) {
     for (let n = 2; n <= MAX_MONS; n++) {
@@ -323,27 +323,36 @@
     const refName = n > 1 ? `${ref.name} (the largest)` : ref.name;
     const cut = (box) => {
       const ba = box.w / box.h;
-      if (a > ba * 1.001) return `The picture is wider than that, so <b>${pct((1 - ba / a) / 2)}</b> of its width is cut off each side.`;
-      if (a < ba * 0.999) return `The picture is taller than that, so <b>${pct((1 - a / ba) / 2)}</b> of its height is cut off the top and the bottom.`;
-      return `The picture has exactly that shape, so it fits without cutting.`;
+      if (a > ba * 1.001) return `The image is wider than that, so <b>${pct((1 - ba / a) / 2)}</b> of its width is cut off each side.`;
+      if (a < ba * 0.999) return `The image is taller than that, so <b>${pct((1 - a / ba) / 2)}</b> of its height is cut off the top and the bottom.`;
+      return `The image has exactly that shape, so it fits without cutting.`;
     };
     if (A.kind === "join") {
       const b = A.per[0].p.box;
       out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't a monitor shape. So it's a panorama. ` : ""}Centered on the ${n % 2 === 0 ? "middle join" : "middle monitor"} and on the middle of ${refName}, it has to cover a <span class="num">${R(b.w)}×${R(b.h)}</span> box (<span class="num">${ar(b.w / b.h)}</span>, in ${ref.name}'s pixels) to reach every monitor. ${cut(b)}</p>`);
     } else if (A.kind === "split") {
+      // A smaller monitor further out from the largest one can't reach the
+      // edge of its slice, so that join lands inside it.
+      const b = A.per[0].p.box, inside = [];
+      for (let k = 1; k < n; k++) {
+        const seam = b.x + b.w * k / n, m = A.desk.list.find(d => seam > d.dx + 0.5 && seam < d.dx + d.dw - 0.5);
+        if (!m) continue;
+        const left = m.dx < A.desk.ref.dx, px = (left ? m.dx + m.dw - seam : seam - m.dx) / m.f;
+        inside.push(` The join between parts ${k} and ${k + 1} lands inside ${m.name}, <span class="num">${R(px)}</span> px from its ${left ? "right" : "left"} edge.`);
+      }
       out.push(n > 1
-        ? `<p>Cut into ${n} slices, each is <span class="num">${ar((iw / n) / ih)}</span>, within 3% of the monitors' shape. So it's full-width: one slice per monitor, placed so the slice of ${refName} sits exactly on it. The other monitors show the part of their slice they physically cover.</p>`
-        : `<p>The picture has the monitor's shape (within 3%), so it fills the monitor.</p>`);
+        ? `<p>Cut into ${n} slices, each is <span class="num">${ar((iw / n) / ih)}</span>, within 3% of the monitors' shape. So it's full-width: one slice per monitor, placed so the slice of ${refName} sits exactly on it. The other monitors show the part of the image they physically cover.${inside.join("")}</p>`
+        : `<p>The image has the monitor's shape (within 3%), so it fills the monitor.</p>`);
     } else if (A.kind === "pano") {
       const b = A.desk.box;
       out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't a monitor shape. So it's one panorama, scaled` : "It's scaled"} to cover the <span class="num">${R(b.w)}×${R(b.h)}</span> box around ${n > 1 ? "all monitors" : "the monitor"} (<span class="num">${ar(b.w / b.h)}</span>). ${cut(b)}</p>`);
     } else {
-      out.push(`<p>Your monitors have different shapes, and each runs the full-width test against its own shape: this picture is full-width for some and a panorama for others. Expect a mismatch at the joins.</p>`);
+      out.push(`<p>Your monitors have different shapes, and each runs the full-width test against its own shape: this image is full-width for some and a panorama for others. Expect a mismatch at the joins.</p>`);
     }
     const tot = A.per.reduce((s, q) => s + (q.reg ? q.reg.src.w * q.reg.src.h : 0), 0) / (iw * ih);
     out.push(`<ul>${A.per.map(q => q.reg
       ? `<li><b style="color:var(${q.me.color})">${q.me.name}</b>: <span class="num">${pct(q.reg.src.x / iw)}–${pct((q.reg.src.x + q.reg.src.w) / iw)}</span> across, <span class="num">${pct(q.reg.src.y / ih)}–${pct((q.reg.src.y + q.reg.src.h) / ih)}</span> down</li>`
-      : `<li><b>${q.me.name}</b>: nothing</li>`).join("")}<li>In total, <b>${pct(Math.min(1, tot))}</b> of the picture is on screen.</li></ul>`);
+      : `<li><b>${q.me.name}</b>: nothing</li>`).join("")}<li>In total, <b>${pct(Math.min(1, tot))}</b> of the image is on screen.</li></ul>`);
     return out.join("");
   }
 
@@ -353,8 +362,8 @@
     host.innerHTML = `
       <div class="case-head"><h3></h3><span class="num" style="color:var(--muted)">${spec.sizeLabel} · ${ar(spec.iw / spec.ih)}</span><span class="chip ${cls}">${txt}</span></div>
       <div class="views">
-        <figure><canvas class="c-src"></canvas><figcaption>The picture. Bright parts are shown, dark parts are never on screen.</figcaption></figure>
-        <figure><canvas class="c-desk"></canvas><figcaption>On your desk, drawn at the monitors' real sizes. The faded area is the part of the picture that hangs past your monitors.</figcaption></figure>
+        <figure><canvas class="c-src"></canvas><figcaption>The image. Bright parts are shown, dark parts are never on screen.</figcaption></figure>
+        <figure><canvas class="c-desk"></canvas><figcaption>On your desk, drawn at the monitors' real sizes. The faded area is the part of the image that hangs past your monitors.</figcaption></figure>
       </div>
       <div class="facts">${explain(spec, A)}</div>`;
     host.querySelector("h3").textContent = spec.title;
@@ -415,10 +424,10 @@
     const differ = others.filter(s => Math.abs(ratio(s) - 1) > 0.005);
     const bigger = s => `${s.name}'s pixels are ${pct(Math.abs(ratio(s) - 1))} ${ratio(s) > 1 ? "bigger" : "smaller"} than ${ref.name}'s`;
     let pitch;
-    if (n === 1) pitch = "With one monitor, spanned pictures are placed like individual ones.";
-    else if (differ.length === 0) pitch = `All monitors have the same pixel size, so the picture is laid out pixel for pixel. ${ref.name} is the reference.`;
-    else if (state.phys) pitch = `${ref.name} is the largest, and the reference. ` + differ.map(s => `${bigger(s)}, so it draws the picture with ${ratio(s) > 1 ? "fewer" : "more"} pixels to keep it the same size.`).join(" ");
-    else pitch = `Pixel for pixel: ${differ.map(s => `${bigger(s)}, so the picture looks ${pct(Math.abs(ratio(s) - 1))} ${ratio(s) > 1 ? "bigger" : "smaller"} there.`).join(" ")}`;
+    if (n === 1) pitch = "With one monitor, spanned images are placed like individual ones.";
+    else if (differ.length === 0) pitch = `All monitors have the same pixel size, so the image is laid out pixel for pixel. ${ref.name} is the reference.`;
+    else if (state.phys) pitch = `${ref.name} is the largest, and the reference. ` + differ.map(s => `${bigger(s)}, so it draws the image with ${ratio(s) > 1 ? "fewer" : "more"} pixels to keep it the same size.`).join(" ");
+    else pitch = `Pixel for pixel: ${differ.map(s => `${bigger(s)}, so the image looks ${pct(Math.abs(ratio(s) - 1))} ${ratio(s) > 1 ? "bigger" : "smaller"} there.`).join(" ")}`;
     document.getElementById("pitchNote").textContent = pitch;
 
     const shapes = [...new Set(desk.list.map(s => (s.w / s.h).toFixed(4)))].map(Number);

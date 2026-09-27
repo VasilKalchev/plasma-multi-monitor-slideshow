@@ -63,10 +63,14 @@ script refuses to replace a folder that is a git checkout.
   to the folders to show, waits for the thumbnails, then grabs the
   dialog's top item (walk `parent` up from `root` to the child of
   `win.contentItem`; the `contentItem` itself can't be grabbed) and, with
-  the popup open, `sizesPopup.contentItem.parent`. Run the copy's
-  `utils/deploy.sh`, open the dialog with the `qdbus … evaluateScript`
-  line above, and when the files are written, run `utils/deploy.sh` from
-  the repo: the restart closes the dialog without applying.
+  the popup open, `sizesPopup.contentItem.parent`. The folder list shows
+  the real paths, so to keep your user name out of it, have the copy's
+  `localPath()` in `FolderListSection.qml` show the home folder as
+  `/home/user` (`.replace(/^\/home\/[^/]+/, "/home/user")`). Run the
+  copy's `utils/deploy.sh`, open the dialog with the `qdbus …
+  evaluateScript` line above, and when the files are written, run
+  `utils/deploy.sh` from the repo: the restart closes the dialog without
+  applying.
 - **Release**: bump `Version` in `metadata.json`, commit, tag
   `v<version>`, and run `utils/package.sh` for the archive to upload. The
   KDE Store thumbnail (also the README's and the site's picture) is
@@ -100,9 +104,10 @@ script refuses to replace a folder that is a git checkout.
   that every screen must run passes a fresh closure
   (`function () { root.x(); }`).
 - **A layer's `geom` is not a binding** (`ImageLayer.qml`). It is
-  computed on image load, on probe results, at every tick, and (debounced
-  1.5 s) when `screenLayout` changes. A new input to `computeGeomFor()`
-  needs a matching refresh.
+  computed on image load, on probe results, at every tick, right away
+  when `SpanFit`, `MatchPhysicalSize` or `MonitorSizes` change, and
+  (debounced 1.5 s) when `screenLayout` changes. A new input to
+  `computeGeomFor()` needs a matching refresh.
 - **Layer handover**: only `pending` (the layer a new picture loads into)
   can become `front`, and only once it is Ready and, for a spanned
   picture, measured. A geometry change makes both layers decode again; if
@@ -119,11 +124,13 @@ script refuses to replace a folder that is a git checkout.
 - **The desk math lives in `desk.js`** (`.pragma library`), shared by
   `main.qml` and `config.qml`: the settings page lays out the same desk to
   gray out the spanned-image settings that make no difference. Change the
-  placement there, not in a copy.
+  placement there, not in a copy, and then the port of it in
+  `docs/cropping.html`, which runs the same math in the browser.
 - **Monitor size corrections** (`MonitorSizes`) are keyed by
   `manufacturer + " " + model` (on KWin Wayland, e.g. `AOC 2369` or
   `Dell Inc. DELL G2724D`; `serialNumber` is empty), so they follow the
-  monitor to another connector. Qt reports an unknown size as 100 DPI,
+  monitor to another connector. A monitor that reports neither is keyed by
+  its connector name (`monitorKey()` in `desk.js`). Qt reports an unknown size as 100 DPI,
   not as 0, so a monitor without an EDID size looks plausible, not missing.
 - **Thumbnails** (`FolderImages.qml`): Qt decodes asynchronous images on
   one thread, newest request first, so the grid starts them itself, two at

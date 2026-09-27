@@ -1,5 +1,5 @@
 # Left out of the release archive (utils/package.sh): the package only
-# needs metadata.json, contents/ and the license.
+# needs metadata.json, contents/, the license and the README.
 /.gitattributes export-ignore
 /.gitignore export-ignore
 /AGENTS.md export-ignore
