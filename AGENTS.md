@@ -14,19 +14,26 @@ changing either.
 
 ## Development setup
 
-Plasma discovers wallpaper plugins in
-`~/.local/share/plasma/wallpapers/<id>/`, so the usual setup is a clone at
-`~/.local/share/plasma/wallpapers/com.github.vasilkalchev.multimonitorslideshow`: the
-working copy is then the live plugin, with no build or install step.
+Plasma loads wallpaper plugins from
+`~/.local/share/plasma/wallpapers/<id>/`. Keep the clone somewhere else
+and install from it with `utils/deploy.sh`, which copies the files the
+release archive holds (metadata.json, contents/, LICENSE, README.md) there
+and restarts plasmashell. The desktop then only runs what was deployed,
+not every half-made edit, and the installed plugin matches a release. The
+script refuses to replace a folder that is a git checkout.
 
-- **Apply a `.qml` edit**: `systemctl --user restart plasma-plasmashell.service`.
-  QML is cached by file path; switching the wallpaper type off and on only
-  re-reads settings, not code. Don't use `kquitapp6 plasmashell` plus a
-  manual relaunch: it takes the shell out of systemd's control.
-- **Never run `kpackagetool6 -i`/`-u` on the working copy's own path.** It
-  can wipe the directory instead of updating it. To test a package, build
-  one with `utils/package.sh` and install it into a scratch root with
-  `kpackagetool6 -t Plasma/Wallpaper -p <dir> -i <archive>`.
+- **Apply a `.qml` edit**: `utils/deploy.sh`. QML is cached by file path
+  for the life of the shell; switching the wallpaper type off and on only
+  re-reads settings, not code. `utils/deploy.sh --no-restart` only copies,
+  which is enough for `kcmshell6 kcm_wallpaper` (see below). Don't use
+  `kquitapp6 plasmashell` plus a manual relaunch: it takes the shell out of
+  systemd's control; the script uses
+  `systemctl --user restart plasma-plasmashell.service`.
+- **Don't install with `kpackagetool6 -i`/`-u` pointed at the clone.** It
+  copies the whole folder, .git and docs included, and once wiped the
+  folder it was pointed at instead of updating it. To test a release
+  archive, build one with `utils/package.sh` and install it into a scratch
+  root with `kpackagetool6 -t Plasma/Wallpaper -p <dir> -i <archive>`.
 - **Logs**: `console.info()`/`console.warn()` and QML errors from the
   wallpaper reach `journalctl --user -u plasma-plasmashell.service`.
   `console.log()` is debug level and filtered out; to see it, add a
@@ -38,14 +45,16 @@ working copy is then the live plugin, with no build or install step.
   `config.qml` fresh with no shell restart, and logs to the system journal
   (`journalctl _COMM=kcmshell6`); it is narrower. The desktop's
   right-click → Desktop and Wallpaper (Desktop Folder Settings) runs
-  inside plasmashell, so it needs a shell restart and logs with the shell;
+  inside plasmashell, so it needs a deploy with the restart and logs with
+  the shell;
   open it with `qdbus org.kde.plasmashell /PlasmaShell
   org.kde.PlasmaShell.evaluateScript 'desktops()[0].showConfigurationInterface()'`.
   Check layout changes in both. Plasma creates the page twice (a throwaway
   copy to find the `cfg_` properties, then the real one), so
   `Component.onCompleted` runs twice.
 - `main.qml` can't run under the `qml` tool (it needs `WallpaperItem` and
-  Plasma's imports), so verifying means restarting the shell.
+  Plasma's imports), so verifying means deploying and restarting the
+  shell.
 - **Release**: bump `Version` in `metadata.json`, commit, tag
   `v<version>`, and run `utils/package.sh` for the archive to upload. The
   KDE Store thumbnail (also the README's and the site's picture) is

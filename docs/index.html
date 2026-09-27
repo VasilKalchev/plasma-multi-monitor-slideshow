@@ -67,9 +67,10 @@
     <pre>kpackagetool6 -t Plasma/Wallpaper -i multi-monitor-slideshow-&lt;version&gt;.tar.gz</pre>
     <p class="note">Use <code>-u</code> instead of <code>-i</code> to update.</p>
     <h3>From source</h3>
-    <pre>git clone https://github.com/VasilKalchev/plasma-multi-monitor-slideshow.git \
-    ~/.local/share/plasma/wallpapers/com.github.vasilkalchev.multimonitorslideshow</pre>
-    <p class="note">If it doesn't show up in the list of wallpaper types, restart Plasma: <code>systemctl --user restart plasma-plasmashell.service</code>.</p>
+    <pre>git clone https://github.com/VasilKalchev/plasma-multi-monitor-slideshow.git
+cd plasma-multi-monitor-slideshow
+utils/deploy.sh</pre>
+    <p class="note"><code>utils/deploy.sh</code> copies the plugin into Plasma's wallpaper folder and restarts Plasma. To update, run <code>git pull</code> and <code>utils/deploy.sh</code> again.</p>
   </section>
 
   <section class="panel" aria-labelledby="use-h">

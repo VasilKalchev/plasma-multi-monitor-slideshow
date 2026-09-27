@@ -59,18 +59,15 @@ To update to a newer archive, use `-u` instead of `-i`.
 
 ### From source
 
-Clone the repository into Plasma's wallpaper folder:
-
 ```sh
-git clone https://github.com/VasilKalchev/plasma-multi-monitor-slideshow.git \
-    ~/.local/share/plasma/wallpapers/com.github.vasilkalchev.multimonitorslideshow
+git clone https://github.com/VasilKalchev/plasma-multi-monitor-slideshow.git
+cd plasma-multi-monitor-slideshow
+utils/deploy.sh
 ```
 
-To update, run `git pull` in that folder.
-
-If **Multi-monitor Slideshow** doesn't show up in the list of wallpaper types
-afterwards, restart Plasma:
-`systemctl --user restart plasma-plasmashell.service`.
+`utils/deploy.sh` copies the plugin into Plasma's wallpaper folder,
+`~/.local/share/plasma/wallpapers/com.github.vasilkalchev.multimonitorslideshow/`,
+and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 
 ## Use
 
@@ -201,8 +198,9 @@ monitors.
 kpackagetool6 -t Plasma/Wallpaper -r com.github.vasilkalchev.multimonitorslideshow
 ```
 
-If you installed from source, delete the cloned folder instead. Thumbnails
-the plugin made are in `~/.cache/com.github.vasilkalchev.multimonitorslideshow/`.
+This also removes a copy installed from source with `utils/deploy.sh`.
+Thumbnails the plugin made are in
+`~/.cache/com.github.vasilkalchev.multimonitorslideshow/`.
 
 ## More
 
