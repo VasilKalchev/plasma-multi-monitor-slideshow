@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Multi-Monitor Slideshow</title>
+<meta name="description" content="A wallpaper slideshow for KDE Plasma 6 with several monitors: wide pictures span all of them, ordinary ones show a different picture on each.">
+<link rel="icon" href="images/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="site-nav" aria-label="Site">
+  <div class="inner">
+    <a class="brand" href="./"><img src="images/icon.svg" alt="">Multi-Monitor Slideshow</a>
+    <a href="./#features">Features</a>
+    <a href="./#install">Install</a>
+    <a href="cropping.html">How cropping works</a>
+    <a href="https://github.com/VasilKalchev/plasma-multi-monitor-slideshow">GitHub</a>
+  </div>
+</nav>
+<div class="wrap">
+  <section class="hero">
+    <div class="text">
+      <span class="eyebrow">Wallpaper plugin for KDE Plasma 6</span>
+      <h1>Multi-Monitor Slideshow</h1>
+      <p class="lede">One slideshow for all of your monitors. Wide pictures span across every monitor together, and ordinary wallpapers show a different picture on each one.</p>
+      <div class="actions">
+        <a class="btn primary" href="https://github.com/VasilKalchev/plasma-multi-monitor-slideshow/releases/latest">Download</a>
+        <a class="btn" href="#install">Install</a>
+        <a class="btn" href="https://github.com/VasilKalchev/plasma-multi-monitor-slideshow">Source on GitHub</a>
+      </div>
+    </div>
+    <img src="images/preview.png" width="1024" height="1024" alt="Two monitors showing one picture spanned across both, and the same two monitors showing a different picture each">
+  </section>
+
+  <section class="panel" id="features" aria-labelledby="features-h">
+    <h2 id="features-h">Features</h2>
+    <div class="cards">
+      <div class="card"><b>Spanned and individual pictures</b><p>Spanning folders hold panoramas and dual or triple monitor wallpapers; individual folders hold ordinary wallpapers. Both take turns in one slideshow, and every monitor changes at the same moment.</p></div>
+      <div class="card"><b>Any monitors</b><p>Any number of monitors, with any resolution, size and height. A spanned picture is laid out over your monitors as they're arranged in Display Configuration.</p></div>
+      <div class="card"><b>The same size on every monitor</b><p>On monitors with different pixel sizes, a spanned picture is scaled per monitor, so it keeps its real size and lines continue straight across the bezel.</p></div>
+      <div class="card"><b>Pre-split wallpapers</b><p>A wallpaper made of one part per monitor is detected, and each part lands on its own monitor with the join on the bezel. Anything else is shown as one panorama.</p></div>
+      <div class="card"><b>Your order</b><p>Random, by name, or by date modified. Pictures added to your folders are picked up at the next change.</p></div>
+      <div class="card"><b>Familiar settings</b><p>A settings page like the built-in Slideshow's: folder lists with tickboxes, a thumbnail grid of each folder, and a tooltip on every setting.</p></div>
+      <div class="card"><b>Right-click menu</b><p>Open Image, Next, Next Individual and Next Spanned on the desktop's menu. Each entry can be hidden.</p></div>
+      <div class="card"><b>One set of settings</b><p>Change the settings from any monitor; all of them follow. Pictures crossfade smoothly, like in the built-in Slideshow.</p></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="fit-h">
+    <h2 id="fit-h">How spanned pictures are fitted</h2>
+    <p>A spanned picture is placed over your monitors as they sit in Display Configuration, then cut to what each monitor covers. With <b>Compensate for pixel size</b> on, it's placed by the monitors' real sizes instead of their pixel counts.</p>
+    <p><b>Detect pre-split images</b> (the default) cuts the picture into one slice per monitor. If a slice has the monitor's shape, each slice goes to its own monitor: a 32:9 picture on two 16:9 monitors splits exactly on the bezel. Anything else is scaled to cover all monitors, centered on them.</p>
+    <p><b>Center on the monitor join</b> centers every picture on the middle join between the monitors and on your largest monitor, then scales it to cover all of them.</p>
+    <div class="actions"><a class="btn primary" href="cropping.html">Try it with your monitors</a></div>
+  </section>
+
+  <section class="panel" id="install" aria-labelledby="install-h">
+    <h2 id="install-h">Install</h2>
+    <h3>From the KDE Store</h3>
+    <p>Right-click the desktop, choose <b>Desktop and Wallpaper…</b>, click <b>Get New Plugins…</b> and search for <b>Multi-Monitor Slideshow</b>.</p>
+    <h3>From a release archive</h3>
+    <p>Download <code>multi-monitor-slideshow-&lt;version&gt;.tar.gz</code> from the <a href="https://github.com/VasilKalchev/plasma-multi-monitor-slideshow/releases">releases page</a> and run:</p>
+    <pre>kpackagetool6 -t Plasma/Wallpaper -i multi-monitor-slideshow-&lt;version&gt;.tar.gz</pre>
+    <p class="note">Use <code>-u</code> instead of <code>-i</code> to update.</p>
+    <h3>From source</h3>
+    <pre>git clone https://github.com/VasilKalchev/plasma-multi-monitor-slideshow.git \
+    ~/.local/share/plasma/wallpapers/com.github.vasilkalchev.multimonitorslideshow</pre>
+    <p class="note">If it doesn't show up in the list of wallpaper types, restart Plasma: <code>systemctl --user restart plasma-plasmashell.service</code>.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="use-h">
+    <h2 id="use-h">Use</h2>
+    <ol class="steps">
+      <li>Right-click the desktop and choose <b>Desktop and Wallpaper…</b></li>
+      <li>Set <b>Wallpaper type</b> to <b>Multi-Monitor Slideshow</b>.</li>
+      <li>Add folders: <b>Individual folders</b> for ordinary wallpapers, <b>Spanning folders</b> for wide pictures that go across all monitors.</li>
+      <li>Choose how often the picture changes and in which order, then click <b>Apply</b>.</li>
+    </ol>
+    <p>Hover any setting for an explanation. The <a href="https://github.com/VasilKalchev/plasma-multi-monitor-slideshow#readme">README</a> covers every setting, the limitations and troubleshooting.</p>
+  </section>
+
+  <footer class="site-footer">
+    <span>Multi-Monitor Slideshow, a wallpaper plugin for KDE Plasma 6</span>
+    <a href="https://github.com/VasilKalchev/plasma-multi-monitor-slideshow">Source on GitHub</a>
+    <span>MIT License</span>
+  </footer>
+</div>
+</body>
+</html>

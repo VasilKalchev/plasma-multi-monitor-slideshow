@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How Cropping Works · Multi-Monitor Slideshow</title>
+<meta name="description" content="How the Multi-Monitor Slideshow wallpaper plugin for KDE Plasma places a spanned picture on your monitors, with your own layout and pictures.">
+<link rel="icon" href="images/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="site-nav" aria-label="Site">
+  <div class="inner">
+    <a class="brand" href="./"><img src="images/icon.svg" alt="">Multi-Monitor Slideshow</a>
+    <a href="./#features">Features</a>
+    <a href="./#install">Install</a>
+    <a href="cropping.html" aria-current="page">How cropping works</a>
+    <a href="https://github.com/VasilKalchev/plasma-multi-monitor-slideshow">GitHub</a>
+  </div>
+</nav>
+<div class="wrap">
+  <header class="page-head">
+    <span class="eyebrow">Multi-Monitor Slideshow · spanning folders</span>
+    <h1>How a spanned wallpaper gets cropped</h1>
+    <p class="lede">Multi-Monitor Slideshow places every spanned picture on your monitors as they really sit on your desk, then cuts it to what each monitor covers. Set up your monitors below to see where each part of a picture ends up. The math is the plugin's own.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="rules-h">
+    <h2 id="rules-h">The rules</h2>
+    <div class="rules">
+      <div class="rule">
+        <span class="eyebrow">First</span>
+        <b>Lay the monitors out by real size</b>
+        <p>With "Compensate for pixel size" on, a monitor with bigger pixels takes more room than its pixel count suggests, so the picture keeps its real size on every monitor. Monitors stay touching, and each keeps its vertical alignment from Display Configuration.</p>
+      </div>
+      <div class="rule">
+        <span class="eyebrow">Center on the monitor join</span>
+        <b>Centered on the bezel</b>
+        <p>The picture's middle goes on the middle join between the monitors (the middle monitor's center with an odd count), and on the middle of the largest monitor vertically. It's scaled, keeping its shape, until every monitor is covered. The overhang is cut.</p>
+      </div>
+      <div class="rule">
+        <span class="eyebrow">Detect pre-split images</span>
+        <b>Slices, or one panorama</b>
+        <p>If cutting the picture into one slice per monitor gives monitor-shaped slices (within 3%), each slice goes to one monitor. Otherwise the picture is scaled to cover the box around all monitors, centered on it.</p>
+      </div>
+    </div>
+    <p class="note">Individual (non-spanning) folders are simpler: each monitor fills itself with its own picture, cropped evenly to its own shape.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="layout-h">
+    <h2 id="layout-h">Your monitors</h2>
+    <p class="note">Left to right, as in Display Configuration. Size is the diagonal in inches; alignment is against the tallest monitor.</p>
+    <div class="presets" id="setupPresets" aria-label="Example setups"></div>
+    <div class="mons" id="mons"></div>
+    <div><button type="button" id="addMon">Add monitor</button></div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Spanned images">
+        <button type="button" id="modeDetect" aria-pressed="true">Detect pre-split images</button>
+        <button type="button" id="modeJoin" aria-pressed="false">Center on the monitor join</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="physToggle" checked> Compensate for pixel size</label>
+    </div>
+    <p class="pitch" id="pitchNote"></p>
+    <div class="ruler" id="ruler" aria-label="Picture shapes, as width to height"></div>
+    <div class="legend" id="legend"></div>
+    <p class="note" id="rulerNote"></p>
+  </section>
+
+  <div id="cases" style="display:grid;gap:28px"></div>
+
+  <section class="panel" aria-labelledby="try-h">
+    <h2 id="try-h">Try any size</h2>
+    <p class="note">Only the shape matters, not the pixel count. Enter a size, pick a common one, or open one of your own pictures (it stays in your browser).</p>
+    <div class="try-controls">
+      <label class="field">Width <input id="tw" type="number" min="1" value="6880" inputmode="numeric"></label>
+      <label class="field">Height <input id="th" type="number" min="1" value="1440" inputmode="numeric"></label>
+      <label class="filebtn">Open image…<input id="tfile" type="file" accept="image/*"></label>
+    </div>
+    <div class="presets" id="presets"></div>
+    <div class="drop" id="drop">Or drop an image file here.</div>
+    <div id="tryCase"></div>
+  </section>
+
+  <footer class="site-footer">
+    <span>Multi-Monitor Slideshow, a wallpaper plugin for KDE Plasma 6</span>
+    <a href="https://github.com/VasilKalchev/plasma-multi-monitor-slideshow">Source on GitHub</a>
+    <span>MIT License</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  // Example layouts: resolution, diagonal in inches, and vertical alignment
+  // against the tallest monitor.
+  const SETUPS = [
+    { label: "24″ 1080p + 27″ 1440p", mons: [[1920, 1080, 24, "center"], [2560, 1440, 27, "center"]] },
+    { label: "Two 27″ 1440p", mons: [[2560, 1440, 27, "center"], [2560, 1440, 27, "center"]] },
+    { label: "Three 24″ 1080p", mons: [[1920, 1080, 24, "center"], [1920, 1080, 24, "center"], [1920, 1080, 24, "center"]] },
+    { label: "27″ 1440p + 34″ ultrawide", mons: [[2560, 1440, 27, "bottom"], [3440, 1440, 34, "bottom"]] },
+    { label: "27″ 1440p + 32″ 1080p", mons: [[2560, 1440, 27, "bottom"], [1920, 1080, 32, "bottom"]] },
+  ];
+  const EXAMPLES = [
+    { title: "Two-part 32:9", iw: 5120, ih: 1440 },
+    { title: "Ultrawide 21:9", iw: 3440, ih: 1440 },
+    { title: "Three-part 48:9", iw: 5760, ih: 1080 },
+    { title: "Panorama 4:1", iw: 8000, ih: 2000 },
+  ];
+  const PRESETS = [[5120, 1440], [3840, 1080], [7680, 1440], [5760, 1080], [3440, 1440], [6880, 1440], [2560, 1440]];
+  const MAX_MONS = 5;
+
+  const state = {
+    mons: [], join: false, phys: true,
+    custom: { iw: 6880, ih: 1440, img: null },
+  };
+  function loadSetup(s) {
+    state.mons = s.mons.map(([w, h, diag, align]) => ({ w, h, diag, align }));
+  }
+  loadSetup(SETUPS[0]);
+
+  const colorOf = i => "--c-m" + (i % 5 + 1);
+  const valid = m => m.w > 0 && m.h > 0 && m.diag > 0;
+
+  // Monitors in Display Configuration terms: pixel positions, left to right.
+  function screens() {
+    const ms = state.mons;
+    const maxH = Math.max(...ms.map(m => m.h));
+    let x = 0;
+    return ms.map((m, i) => {
+      const mmW = m.diag * 25.4 * m.w / Math.hypot(m.w, m.h);
+      const y = m.align === "top" ? 0 : m.align === "bottom" ? maxH - m.h : Math.round((maxH - m.h) / 2);
+      const s = { i, name: "Monitor " + (i + 1), x, y, w: m.w, h: m.h, mmW, diag: m.diag, density: m.w / mmW, color: colorOf(i) };
+      x += m.w;
+      return s;
+    });
+  }
+
+  // ---- geometry: a straight port of deskLayout() and computeGeomFor() in main.qml ----
+  function deskLayout(sc) {
+    const list = sc.map(s => ({ ...s }));
+    const known = list.every(d => isFinite(d.density) && d.density > 0);
+    const usePhys = state.phys && known;
+    const size = d => usePhys ? (d.w / d.density) * (d.h / d.density) : d.w * d.h;
+    let ref = null;
+    list.forEach(d => { if (!ref || size(d) > size(ref)) ref = d; });
+    list.sort((a, b) => (a.x - b.x) || (a.y - b.y));
+    const refIndex = list.indexOf(ref);
+    list.forEach(e => {
+      e.f = usePhys ? ref.density / e.density : 1;
+      e.dw = e.w * e.f; e.dh = e.h * e.f;
+      const dh = ref.h - e.h;
+      e.dy = Math.abs(dh) < 1 ? e.y : ref.y + (e.y - ref.y) / dh * (ref.h - e.dh);
+    });
+    ref.dx = ref.x;
+    for (let l = refIndex - 1; l >= 0; l--) {
+      const gap = list[l + 1].x - (list[l].x + list[l].w);
+      list[l].dx = list[l + 1].dx - gap - list[l].dw;
+    }
+    for (let r = refIndex + 1; r < list.length; r++) {
+      const gap = list[r].x - (list[r - 1].x + list[r - 1].w);
+      list[r].dx = list[r - 1].dx + list[r - 1].dw + gap;
+    }
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    list.forEach(e => { x0 = Math.min(x0, e.dx); y0 = Math.min(y0, e.dy); x1 = Math.max(x1, e.dx + e.dw); y1 = Math.max(y1, e.dy + e.dh); });
+    return { list, ref, refIndex, box: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } };
+  }
+  function middleJoinX(desk) {
+    const n = desk.list.length;
+    if (n % 2 === 0) return desk.list[n / 2].dx;
+    const mid = desk.list[(n - 1) / 2];
+    return mid.dx + mid.dw / 2;
+  }
+  function joinBox(desk) {
+    const cx = middleJoinX(desk), cy = desk.ref.dy + desk.ref.dh / 2, b = desk.box;
+    const hw = Math.max(cx - b.x, b.x + b.w - cx), hh = Math.max(cy - b.y, b.y + b.h - cy);
+    return { x: cx - hw, y: cy - hh, w: 2 * hw, h: 2 * hh };
+  }
+  // Where the picture sits on the desk for one monitor: the kind of
+  // placement, its box, and desk = origin + source * k.
+  function place(desk, me, iw, ih) {
+    const n = desk.list.length;
+    let kind, box, stretch = false;
+    if (state.join) { kind = "join"; box = joinBox(desk); }
+    else {
+      const unitAspect = (iw / n) / ih, myAspect = me.w / me.h;
+      if (Math.abs(unitAspect - myAspect) / myAspect < 0.03) {
+        kind = "split"; stretch = true;
+        box = { x: desk.ref.dx - desk.refIndex * desk.ref.dw, y: desk.ref.dy, w: desk.ref.dw * n, h: desk.ref.dh };
+      } else { kind = "pano"; box = desk.box; }
+    }
+    if (stretch) return { kind, box, ox: box.x, oy: box.y, kx: box.w / iw, ky: box.h / ih };
+    const s = Math.max(box.w / iw, box.h / ih);
+    return { kind, box, ox: box.x + (box.w - iw * s) / 2, oy: box.y + (box.h - ih * s) / 2, kx: s, ky: s };
+  }
+  function clipRect(r, c) {
+    const x0 = Math.max(r.x, c.x), y0 = Math.max(r.y, c.y), x1 = Math.min(r.x + r.w, c.x + c.w), y1 = Math.min(r.y + r.h, c.y + c.h);
+    return x1 > x0 && y1 > y0 ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : null;
+  }
+  // The part of the picture a monitor shows (src, in picture pixels), and
+  // where that lands on the desk (dst).
+  function region(me, p, iw, ih) {
+    const vis = clipRect({ x: me.dx, y: me.dy, w: me.dw, h: me.dh }, p.box);
+    if (!vis) return null;
+    const src = clipRect({ x: (vis.x - p.ox) / p.kx, y: (vis.y - p.oy) / p.ky, w: vis.w / p.kx, h: vis.h / p.ky }, { x: 0, y: 0, w: iw, h: ih });
+    if (!src) return null;
+    return { src, dst: { x: p.ox + src.x * p.kx, y: p.oy + src.y * p.ky, w: src.w * p.kx, h: src.h * p.ky } };
+  }
+  function analyse(iw, ih) {
+    const desk = deskLayout(screens());
+    const per = desk.list.map(me => { const p = place(desk, me, iw, ih); return { me, p, reg: region(me, p, iw, ih) }; });
+    const kinds = [...new Set(per.map(q => q.p.kind))];
+    return { desk, per, kind: kinds.length === 1 ? kinds[0] : "mixed" };
+  }
+
+  // ---- drawing ----
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const fmt = v => v.toFixed(2).replace(/0$/, "");
+  // A shape as width:9, like 16:9 or 32:9.
+  const ar = r => { const v = Math.round(r * 90) / 10; return (Number.isInteger(v) ? v : v.toFixed(1)) + ":9"; };
+  const pct = v => Math.round(v * 100) + "%";
+  const R = v => Math.round(v);
+
+  const patternCache = new Map();
+  function pattern(iw, ih, seams) {
+    const key = iw + "x" + ih + ":" + seams;
+    if (patternCache.has(key)) return patternCache.get(key);
+    const W = 1800, H = Math.max(60, Math.round(W * ih / iw));
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d");
+    const g = x.createLinearGradient(0, 0, W, 0);
+    g.addColorStop(0, "hsl(205,55%,42%)"); g.addColorStop(0.5, "hsl(265,38%,44%)"); g.addColorStop(1, "hsl(22,62%,52%)");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    const v = x.createLinearGradient(0, 0, 0, H);
+    v.addColorStop(0, "rgba(255,255,255,0.18)"); v.addColorStop(1, "rgba(0,0,0,0.35)");
+    x.fillStyle = v; x.fillRect(0, 0, W, H);
+    const r = Math.min(H, W) * 0.16;
+    x.fillStyle = "rgba(255,236,190,0.9)"; x.beginPath(); x.arc(W / 2, H * 0.42, r, 0, 7); x.fill();
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    x.fillStyle = "rgba(20,28,38,0.72)"; x.beginPath(); x.moveTo(0, H);
+    for (let i = 0; i <= 60; i++) x.lineTo(W * i / 60, H * (0.72 + 0.12 * Math.sin(i * 0.45) + 0.06 * rnd()));
+    x.lineTo(W, H); x.fill();
+    x.strokeStyle = "rgba(255,255,255,0.35)"; x.lineWidth = 2;
+    const fs = Math.max(14, Math.min(34, H * 0.07));
+    x.font = `500 ${fs}px "IBM Plex Mono", monospace`; x.fillStyle = "rgba(255,255,255,0.9)";
+    for (let i = 1; i < 10; i++) {
+      const gx = W * i / 10; x.beginPath(); x.moveTo(gx, 0); x.lineTo(gx, H); x.stroke();
+      x.fillText(i * 10 + "%", gx + 6, fs + 6);
+      const gy = H * i / 10; x.beginPath(); x.moveTo(0, gy); x.lineTo(W, gy); x.stroke();
+      if (i % 2 === 0 && H > 160) x.fillText(i * 10 + "%", 8, gy - 6);
+    }
+    x.strokeStyle = "rgba(255,255,255,0.8)"; x.lineWidth = 3; x.strokeRect(1.5, 1.5, W - 3, H - 3);
+    if (seams > 1) {
+      x.setLineDash([18, 12]); x.strokeStyle = "#fff"; x.lineWidth = 5;
+      for (let k = 1; k < seams; k++) { x.beginPath(); x.moveTo(W * k / seams, 0); x.lineTo(W * k / seams, H); x.stroke(); }
+      x.setLineDash([]);
+      x.font = `600 ${fs * 1.2}px "IBM Plex Sans", sans-serif`; x.textAlign = "center";
+      for (let k = 0; k < seams; k++) x.fillText("part " + (k + 1), W * (k + 0.5) / seams, H * 0.2 + fs);
+      x.textAlign = "start";
+    }
+    patternCache.set(key, c);
+    return c;
+  }
+  // A picture made of monitor-shaped parts gets its joins drawn, so you can
+  // see where they land.
+  function seamsFor(iw, ih) {
+    for (let n = 2; n <= MAX_MONS; n++) {
+      if (state.mons.some(m => Math.abs((iw / n) / ih - m.w / m.h) / (m.w / m.h) < 0.03)) return n;
+    }
+    return 0;
+  }
+  function setupCanvas(cv, aspect) {
+    const w = cv.clientWidth || cv.parentElement.clientWidth || 600;
+    const h = Math.max(50, Math.round(w / aspect));
+    const dpr = window.devicePixelRatio || 1;
+    cv.style.height = h + "px"; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+  function label(ctx, text, x, y, color, maxW) {
+    ctx.font = '600 12px "IBM Plex Sans", sans-serif';
+    const tw = Math.min(ctx.measureText(text).width, maxW ? maxW - 8 : 999);
+    if (tw < 12) return;
+    ctx.fillStyle = color; ctx.fillRect(x, y, tw + 10, 18);
+    ctx.fillStyle = "#10151b"; ctx.fillText(text, x + 5, y + 13, tw);
+  }
+  function imageFor(spec) { return spec.img || pattern(spec.iw, spec.ih, seamsFor(spec.iw, spec.ih)); }
+
+  function drawSource(cv, spec, A) {
+    const { ctx, w, h } = setupCanvas(cv, spec.iw / spec.ih);
+    const img = imageFor(spec);
+    const sx = img.width / spec.iw, sy = img.height / spec.ih, kx = w / spec.iw, ky = h / spec.ih;
+    ctx.drawImage(img, 0, 0, w, h);
+    ctx.fillStyle = "rgba(8,11,15,0.66)"; ctx.fillRect(0, 0, w, h);
+    A.per.forEach(q => { if (!q.reg) return; const r = q.reg.src;
+      ctx.drawImage(img, r.x * sx, r.y * sy, r.w * sx, r.h * sy, r.x * kx, r.y * ky, r.w * kx, r.h * ky); });
+    A.per.forEach(q => { if (!q.reg) return; const r = q.reg.src, col = css(q.me.color);
+      ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.strokeRect(r.x * kx + 1.25, r.y * ky + 1.25, r.w * kx - 2.5, r.h * ky - 2.5);
+      if (r.h * ky > 24) label(ctx, q.me.name, r.x * kx + 4, r.y * ky + 4, col, r.w * kx); });
+  }
+
+  function drawDesk(cv, spec, A) {
+    const ref = A.per.find(q => q.me === A.desk.ref) || A.per[0];
+    const p = ref.p, gr = { x: p.ox, y: p.oy, w: spec.iw * p.kx, h: spec.ih * p.ky };
+    const rects = [A.desk.box, gr];
+    let x0 = Math.min(...rects.map(r => r.x)), y0 = Math.min(...rects.map(r => r.y));
+    let x1 = Math.max(...rects.map(r => r.x + r.w)), y1 = Math.max(...rects.map(r => r.y + r.h));
+    const pad = (x1 - x0) * 0.025; x0 -= pad; x1 += pad; y0 -= pad; y1 += pad;
+    const { ctx, w } = setupCanvas(cv, (x1 - x0) / (y1 - y0));
+    const k = w / (x1 - x0), T = (x, y) => [(x - x0) * k, (y - y0) * k];
+    const img = imageFor(spec), sx = img.width / spec.iw, sy = img.height / spec.ih;
+    ctx.globalAlpha = 0.28; const [gx, gy] = T(gr.x, gr.y); ctx.drawImage(img, gx, gy, gr.w * k, gr.h * k); ctx.globalAlpha = 1;
+    ctx.strokeStyle = css("--muted"); ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.strokeRect(gx + .5, gy + .5, gr.w * k - 1, gr.h * k - 1); ctx.setLineDash([]);
+    A.per.forEach(q => {
+      const m = q.me, [mx, my] = T(m.dx, m.dy);
+      ctx.fillStyle = "#000"; ctx.fillRect(mx, my, m.dw * k, m.dh * k);
+      if (q.reg) { const r = q.reg.src, d = q.reg.dst, [dx, dy] = T(d.x, d.y);
+        ctx.drawImage(img, r.x * sx, r.y * sy, r.w * sx, r.h * sy, dx, dy, d.w * k, d.h * k); }
+      const col = css(m.color);
+      ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.strokeRect(mx + 1.5, my + 1.5, m.dw * k - 3, m.dh * k - 3);
+      label(ctx, m.name, mx + 6, my + 6, col, m.dw * k);
+    });
+  }
+
+  function explain(spec, A) {
+    const { iw, ih } = spec, a = iw / ih, n = A.per.length, ref = A.desk.ref, out = [];
+    const refName = n > 1 ? `${ref.name} (the largest)` : ref.name;
+    const cut = (box) => {
+      const ba = box.w / box.h;
+      if (a > ba * 1.001) return `The picture is wider than that, so <b>${pct((1 - ba / a) / 2)}</b> of its width is cut off each side.`;
+      if (a < ba * 0.999) return `The picture is taller than that, so <b>${pct((1 - a / ba) / 2)}</b> of its height is cut off the top and the bottom.`;
+      return `The picture has exactly that shape, so it fits without cutting.`;
+    };
+    if (A.kind === "join") {
+      const b = A.per[0].p.box;
+      out.push(`<p>Centered on the ${n % 2 === 0 ? "middle join" : "middle monitor"} and on the middle of ${refName}, the picture has to cover a <span class="num">${R(b.w)}×${R(b.h)}</span> box (<span class="num">${ar(b.w / b.h)}</span>, in ${ref.name}'s pixels) to reach every monitor. ${cut(b)}</p>`);
+    } else if (A.kind === "split") {
+      out.push(n > 1
+        ? `<p>Cut into ${n} slices, each is <span class="num">${ar((iw / n) / ih)}</span>, within 3% of the monitors' shape. So it's pre-split: one slice per monitor, placed so the slice of ${refName} sits exactly on it. The other monitors show the part of their slice they physically cover.</p>`
+        : `<p>The picture has the monitor's shape (within 3%), so it fills the monitor.</p>`);
+    } else if (A.kind === "pano") {
+      const b = A.desk.box;
+      out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't a monitor shape. So it's one panorama, scaled` : "It's scaled"} to cover the <span class="num">${R(b.w)}×${R(b.h)}</span> box around ${n > 1 ? "all monitors" : "the monitor"} (<span class="num">${ar(b.w / b.h)}</span>). ${cut(b)}</p>`);
+    } else {
+      out.push(`<p>Your monitors have different shapes, and each runs the pre-split test against its own shape: this picture is pre-split for some and a panorama for others. Expect a mismatch at the joins.</p>`);
+    }
+    const tot = A.per.reduce((s, q) => s + (q.reg ? q.reg.src.w * q.reg.src.h : 0), 0) / (iw * ih);
+    out.push(`<ul>${A.per.map(q => q.reg
+      ? `<li><b style="color:var(${q.me.color})">${q.me.name}</b>: <span class="num">${pct(q.reg.src.x / iw)}–${pct((q.reg.src.x + q.reg.src.w) / iw)}</span> across, <span class="num">${pct(q.reg.src.y / ih)}–${pct((q.reg.src.y + q.reg.src.h) / ih)}</span> down</li>`
+      : `<li><b>${q.me.name}</b>: nothing</li>`).join("")}<li>In total, <b>${pct(Math.min(1, tot))}</b> of the picture is on screen.</li></ul>`);
+    return out.join("");
+  }
+
+  const KIND_CHIP = { join: ["split", "Centered on the join"], split: ["split", "Pre-split"], pano: ["pano", "Panorama"], mixed: ["pano", "Mixed"] };
+  function renderCase(host, spec) {
+    const A = analyse(spec.iw, spec.ih), [cls, txt] = KIND_CHIP[A.kind];
+    host.innerHTML = `
+      <div class="case-head"><h3></h3><span class="num" style="color:var(--muted)">${spec.sizeLabel} · ${ar(spec.iw / spec.ih)}</span><span class="chip ${cls}">${txt}</span></div>
+      <div class="views">
+        <figure><canvas class="c-src"></canvas><figcaption>The picture. Bright parts are shown, dark parts are never on screen.</figcaption></figure>
+        <figure><canvas class="c-desk"></canvas><figcaption>On your desk, drawn at the monitors' real sizes. The faded area is the part of the picture that hangs past your monitors.</figcaption></figure>
+      </div>
+      <div class="facts">${explain(spec, A)}</div>`;
+    host.querySelector("h3").textContent = spec.title;
+    drawSource(host.querySelector(".c-src"), spec, A);
+    drawDesk(host.querySelector(".c-desk"), spec, A);
+  }
+
+  // ---- monitor editor ----
+  const monsEl = document.getElementById("mons");
+  function renderMonitors() {
+    monsEl.innerHTML = "";
+    state.mons.forEach((m, i) => {
+      const row = document.createElement("div");
+      row.className = "monrow";
+      row.innerHTML = `
+        <span class="mon"><i class="sw" style="background:var(${colorOf(i)})"></i><b>Monitor ${i + 1}</b></span>
+        <label class="field">Width <input type="number" min="1" inputmode="numeric" data-f="w" value="${m.w}"></label>
+        <label class="field">Height <input type="number" min="1" inputmode="numeric" data-f="h" value="${m.h}"></label>
+        <label class="field">Size (in) <input class="short" type="number" min="1" step="0.1" inputmode="decimal" data-f="diag" value="${m.diag}"></label>
+        <label class="field">Align <select data-f="align">
+          <option value="top">Top</option><option value="center">Center</option><option value="bottom">Bottom</option>
+        </select></label>
+        <button type="button" class="rm" aria-label="Remove monitor ${i + 1}">Remove</button>
+        <span class="num dim" data-pitch></span>`;
+      row.querySelector("select").value = m.align;
+      row.querySelectorAll("[data-f]").forEach(el => el.addEventListener("input", () => {
+        const f = el.dataset.f;
+        m[f] = f === "align" ? el.value : parseFloat(el.value);
+        if (state.mons.every(valid)) renderAll();
+      }));
+      const rm = row.querySelector(".rm");
+      rm.disabled = state.mons.length <= 1;
+      rm.addEventListener("click", () => { state.mons.splice(i, 1); renderMonitors(); renderAll(); });
+      monsEl.appendChild(row);
+    });
+    document.getElementById("addMon").disabled = state.mons.length >= MAX_MONS;
+  }
+  document.getElementById("addMon").addEventListener("click", () => {
+    const last = state.mons[state.mons.length - 1];
+    state.mons.push({ ...last });
+    renderMonitors(); renderAll();
+  });
+  const setupEl = document.getElementById("setupPresets");
+  SETUPS.forEach(s => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = s.label;
+    b.addEventListener("click", () => { loadSetup(s); renderMonitors(); renderAll(); });
+    setupEl.appendChild(b);
+  });
+
+  // ---- setup panel ----
+  function renderSetup() {
+    const sc = screens(), desk = deskLayout(sc), n = sc.length;
+    monsEl.querySelectorAll("[data-pitch]").forEach((el, i) => {
+      el.textContent = sc[i] ? `${(sc[i].mmW / sc[i].w).toFixed(3)} mm/px` : "";
+    });
+    const ref = desk.ref, others = desk.list.filter(s => s !== ref);
+    const ratio = s => ref.density / s.density;
+    const differ = others.filter(s => Math.abs(ratio(s) - 1) > 0.005);
+    const bigger = s => `${s.name}'s pixels are ${pct(Math.abs(ratio(s) - 1))} ${ratio(s) > 1 ? "bigger" : "smaller"} than ${ref.name}'s`;
+    let pitch;
+    if (n === 1) pitch = "With one monitor, spanned pictures are placed like individual ones.";
+    else if (differ.length === 0) pitch = `All monitors have the same pixel size, so the picture is laid out pixel for pixel. ${ref.name} is the reference.`;
+    else if (state.phys) pitch = `${ref.name} is the largest, and the reference. ` + differ.map(s => `${bigger(s)}, so it draws the picture with ${ratio(s) > 1 ? "fewer" : "more"} pixels to keep it the same size.`).join(" ");
+    else pitch = `Pixel for pixel: ${differ.map(s => `${bigger(s)}, so the picture looks ${pct(Math.abs(ratio(s) - 1))} ${ratio(s) > 1 ? "bigger" : "smaller"} there.`).join(" ")}`;
+    document.getElementById("pitchNote").textContent = pitch;
+
+    const shapes = [...new Set(desk.list.map(s => (s.w / s.h).toFixed(4)))].map(Number);
+    const b = state.join ? joinBox(desk) : desk.box, fa = b.w / b.h;
+    const aspects = [fa, n * Math.max(...shapes) * 1.03, state.custom.iw / state.custom.ih, ...EXAMPLES.map(e => e.iw / e.ih)];
+    const lo = 1, hi = Math.max(5, Math.ceil(Math.max(...aspects) + 0.5));
+    const P = v => ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * 100) + "%";
+    let html = `<div class="track"></div>`, legend, note;
+    if (state.join) {
+      html += `<div class="fit" style="left:${P(fa)}"></div>`;
+      legend = `<span><i class="sw" style="background:var(--ink);width:2px"></i>${ar(fa)} fits exactly (${R(b.w)}×${R(b.h)})</span>`;
+      note = `Centered on the join, a <span class="num">${ar(fa)}</span> picture fits exactly. Narrower pictures lose top and bottom, wider ones lose the sides.`;
+    } else {
+      shapes.forEach(m => { const x = n * m * 0.97, y = n * m * 1.03; html += `<div class="band" style="left:${P(x)};width:calc(${P(y)} - ${P(x)})"></div>`; });
+      html += `<div class="fit" style="left:${P(fa)}"></div>`;
+      legend = `<span><i class="sw" style="background:var(--chip-split-ink)"></i>pre-split range</span><span><i class="sw" style="background:var(--chip-pano);border:1px solid var(--line)"></i>panorama</span><span><i class="sw" style="background:var(--ink);width:2px"></i>${ar(fa)} panorama fits exactly</span>`;
+      note = shapes.length === 1
+        ? `With ${n} monitor${n > 1 ? "s" : ""}, anything between <span class="num">${ar(n * shapes[0] * 0.97)}</span> and <span class="num">${ar(n * shapes[0] * 1.03)}</span> is pre-split. Anything else is a panorama: narrower than <span class="num">${ar(fa)}</span> loses top and bottom, wider loses the sides.`
+        : `Your monitors have different shapes, so each runs the pre-split test for its own shape (one band each).`;
+    }
+    [16, 21, 32, 48, 64].forEach(w => { if (w / 9 > lo && w / 9 <= hi) html += `<span class="tick" style="left:${P(w / 9)}">${w}:9</span>`; });
+    EXAMPLES.forEach((e, i) => { html += `<span class="mk" style="left:${P(e.iw / e.ih)}">${i + 1}</span>`; });
+    const c = state.custom; html += `<span class="mk" style="left:${P(c.iw / c.ih)};color:var(--accent)">yours</span>`;
+    document.getElementById("ruler").innerHTML = html;
+    document.getElementById("legend").innerHTML = legend;
+    document.getElementById("rulerNote").innerHTML = note;
+    document.getElementById("modeJoin").setAttribute("aria-pressed", String(state.join));
+    document.getElementById("modeDetect").setAttribute("aria-pressed", String(!state.join));
+  }
+
+  // ---- page ----
+  const casesEl = document.getElementById("cases");
+  const hosts = EXAMPLES.map(() => { const d = document.createElement("section"); d.className = "case"; casesEl.appendChild(d); return d; });
+  const tryHost = document.getElementById("tryCase");
+  function renderTry() {
+    const c = state.custom;
+    renderCase(tryHost, { title: c.img ? c.label : "Your size", sizeLabel: `${c.iw}×${c.ih}`, iw: c.iw, ih: c.ih, img: c.img });
+  }
+  function renderAll() {
+    renderSetup();
+    EXAMPLES.forEach((e, i) => renderCase(hosts[i], { ...e, title: `${i + 1}. ${e.title}`, sizeLabel: `${e.iw}×${e.ih}` }));
+    renderTry();
+  }
+
+  document.getElementById("modeJoin").addEventListener("click", () => { state.join = true; renderAll(); });
+  document.getElementById("modeDetect").addEventListener("click", () => { state.join = false; renderAll(); });
+  document.getElementById("physToggle").addEventListener("change", e => { state.phys = e.target.checked; renderAll(); });
+  const tw = document.getElementById("tw"), th = document.getElementById("th");
+  function fromInputs() {
+    const w = parseInt(tw.value, 10), h = parseInt(th.value, 10);
+    if (w > 0 && h > 0) { state.custom = { iw: w, ih: h, img: null }; renderSetup(); renderTry(); }
+  }
+  tw.addEventListener("input", fromInputs); th.addEventListener("input", fromInputs);
+  const pre = document.getElementById("presets");
+  PRESETS.forEach(([w, h]) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = `${w}×${h}`;
+    b.addEventListener("click", () => { tw.value = w; th.value = h; fromInputs(); });
+    pre.appendChild(b);
+  });
+  function loadFile(f) {
+    if (!f || !/^image\//.test(f.type)) return;
+    const im = new Image();
+    im.onload = () => {
+      tw.value = im.naturalWidth; th.value = im.naturalHeight;
+      state.custom = { iw: im.naturalWidth, ih: im.naturalHeight, img: im, label: f.name };
+      renderSetup(); renderTry();
+    };
+    im.src = URL.createObjectURL(f);
+  }
+  document.getElementById("tfile").addEventListener("change", e => loadFile(e.target.files[0]));
+  const drop = document.getElementById("drop");
+  ["dragenter", "dragover"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => loadFile(e.dataTransfer.files[0]));
+
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(renderAll, 120); });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", renderAll); } catch (e) {}
+  renderMonitors();
+  renderAll();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(renderAll);
+})();
+</script>
+</body>
+</html>
