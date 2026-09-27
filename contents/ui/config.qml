@@ -175,7 +175,7 @@ ColumnLayout {
             notes.push(i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Your monitors have the same pixel size, so spanned images are the same size on each already."));
         }
         if (!joinMatters) {
-            notes.push(i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Your monitors are arranged symmetrically, so centering panoramas on the bezel changes nothing."));
+            notes.push(i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Your monitors are arranged symmetrically, so centering on the bezel changes nothing."));
         }
         return notes.join(" ");
     }
@@ -387,13 +387,13 @@ ColumnLayout {
 
         QQC2.CheckBox {
             enabled: root.spanSettingsApply && root.joinMatters
-            text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Center panoramas on the bezel between the monitors")
+            text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Always center on the bezel between the monitors")
             checked: root.cfg_SpanFit === 1
             onToggled: { root.cfg_SpanFit = checked ? 1 : 0; root.stamp(); }
 
             QQC2.ToolTip.visible: hovered
             QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-            QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "A panorama is a spanned image that isn't as wide as all of your monitors together. Full-width images, such as a 32:9 image on two 16:9 monitors, always split on the bezels, whatever this is set to. Off: a panorama is centered on your monitors as a whole, which cuts off the least. On: its middle goes on the bezel between the two middle monitors (with an odd number, on the middle monitor's center), so a two-part wallpaper made for other monitors, such as two 16:10 halves, still splits on the bezel. More is cut off at the edges.")
+            QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Full-width images, as wide as all of your monitors together (such as a 32:9 image on two 16:9 monitors), are always centered on the bezel. Other spanned images, panoramas, are centered on your monitors as a whole when this is off, which cuts off the least. When it's on, they're centered on the bezel between the two middle monitors too (with an odd number, on the middle monitor's center), so a two-part wallpaper made for other monitors, such as two 16:10 halves, still splits on the bezel. More is cut off at the edges.")
         }
 
         QQC2.Label {

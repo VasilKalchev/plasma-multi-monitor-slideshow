@@ -100,7 +100,7 @@ match any monitor, so it becomes a panorama.
 
 Any other image is a panorama: it's scaled, keeping its shape, until it
 covers a box on the desk, and the overhang is cut evenly. Which box
-depends on **Center panoramas on the bezel between the monitors**.
+depends on **Always center on the bezel between the monitors**.
 
 **Off (the default):** the box around all monitors, desk x −266 to 4480
 and y 0 to 1440, so 4746 x 1440, with the image centered on it. This cuts
