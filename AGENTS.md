@@ -72,11 +72,16 @@ script refuses to replace a folder that is a git checkout.
   `utils/deploy.sh` from the repo: the restart closes the dialog without
   applying.
 - **Release**: bump `Version` in `metadata.json`, commit, tag
-  `v<version>`, and run `utils/package.sh` for the archive to upload. The
-  KDE Store thumbnail (also the README's and the site's picture) is
+  `v<version>`, push the tag, and run `utils/package.sh` for the archive.
+  Attach it to a GitHub release (`gh release create v<version>
+  <archive>`) and upload it on the KDE Store product's Files tab, with a
+  changelog entry. The store product is in **Plasma 6 Extensions ›
+  Plasma 6 Wallpaper Plugins**, the category Get New Plugins… reads. Its
+  thumbnail (also the README's and the site's picture) is
   `docs/images/preview.png`, drawn by `utils/make-preview.py` (needs
-  Inkscape and ImageMagick); `settings.png` is the store's second
-  screenshot.
+  Inkscape and ImageMagick); `settings.png` is its second screenshot, and
+  its logo is `docs/images/icon.svg` rendered at 512 px. The website is
+  GitHub Pages, served from `docs/` on `main`.
 
 ## Gotchas
 
