@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "desk.js" as Desk
 
 ColumnLayout {
     id: root
@@ -30,6 +31,8 @@ ColumnLayout {
 
     property bool cfg_MatchPhysicalSize: true
     property bool cfg_MatchPhysicalSizeDefault: true
+    property list<string> cfg_MonitorSizes: []
+    property list<string> cfg_MonitorSizesDefault: []
 
     property bool cfg_ShowWallpaperHeader: false
     property bool cfg_ShowWallpaperHeaderDefault: false
@@ -89,6 +92,93 @@ ColumnLayout {
     onCfg_SpanPathsChanged: Qt.callLater(ensureSelection)
     onCfg_SinglePathsChanged: Qt.callLater(ensureSelection)
     Component.onCompleted: Qt.callLater(ensureSelection)
+
+    // -- monitor sizes --
+    // The connected monitors, left to right, with the size each reports and
+    // the size in use (the user's correction, if any), in inches.
+    readonly property var sizeCorrections: Desk.parseSizes(cfg_MonitorSizes)
+    readonly property var monitors: {
+        const screens = Qt.application.screens;
+        const list = [];
+        for (let i = 0; i < screens.length; i++) {
+            const s = screens[i];
+            const key = Desk.monitorKey(s);
+            const corrected = sizeCorrections[key];
+            const reported = Desk.reportedInches(s);
+            list.push({
+                key: key,
+                name: monitorName(s),
+                x: s.virtualX,
+                y: s.virtualY,
+                reported: reported,
+                corrected: corrected !== undefined,
+                inches: corrected !== undefined ? corrected : reported
+            });
+        }
+        list.sort((a, b) => (a.x - b.x) || (a.y - b.y));
+        return list;
+    }
+
+    // "AOC 2369 (DP-1)", "DELL G2724D (DP-2)": the model, with the make
+    // unless the model already starts with it.
+    function monitorName(s) {
+        const make = (s.manufacturer || "").split(" ")[0];
+        const model = make && !s.model.toLowerCase().startsWith(make.toLowerCase())
+            ? make + " " + s.model : s.model;
+        return model ? i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "%1 (%2)", model, s.name) : s.name;
+    }
+
+    function inchesText(inches) {
+        return inches > 0 ? i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "%1″", inches.toFixed(1))
+                          : i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "unknown");
+    }
+
+    // A size within 0.05″ of the reported one isn't a correction.
+    function setMonitorSize(monitor, inches) {
+        const list = cfg_MonitorSizes.filter(e => e.slice(0, e.lastIndexOf("=")) !== monitor.key);
+        if (inches > 0 && Math.abs(inches - monitor.reported) >= 0.05) {
+            list.push(monitor.key + "=" + inches.toFixed(1));
+        }
+        cfg_MonitorSizes = list;
+        stamp();
+    }
+
+    // -- which spanned-image settings make a difference --
+    readonly property bool spanFoldersInUse: cfg_SpanPaths.some(p => cfg_DisabledPaths.indexOf(p) === -1)
+    readonly property bool severalMonitors: Desk.screenCount(Qt.application.screens) > 1
+    readonly property bool spanSettingsApply: spanFoldersInUse && severalMonitors
+    // The desk with every monitor at its real size.
+    readonly property var physicalDesk: Desk.layout(Qt.application.screens, true, sizeCorrections)
+    readonly property bool pixelSizesDiffer: physicalDesk.list.some(d => Math.abs(d.f - 1) > 0.005)
+    // Centering a panorama on the join only moves it when the join isn't
+    // already the middle of the monitors.
+    readonly property bool joinMatters: {
+        const desk = Desk.layout(Qt.application.screens, cfg_MatchPhysicalSize, sizeCorrections);
+        if (desk.list.length < 2) {
+            return false;
+        }
+        const join = Desk.joinBox(desk);
+        return Math.abs(join.w - desk.box.w) > 1 || Math.abs(join.h - desk.box.h) > 1;
+    }
+    // Why some of them are greyed out.
+    readonly property string spanNote: {
+        if (!spanFoldersInUse) {
+            return i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "These only affect images from spanning folders, and no spanning folder is in use.");
+        }
+        if (!severalMonitors) {
+            return i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Only one monitor is connected, so spanned images are shown like individual ones.");
+        }
+        const notes = [];
+        if (!physicalDesk.usePhys) {
+            notes.push(i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "A monitor doesn't report its size; enter it under Monitor Sizes."));
+        } else if (!pixelSizesDiffer) {
+            notes.push(i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Your monitors have the same pixel size, so spanned images are the same size on each already."));
+        }
+        if (!joinMatters) {
+            notes.push(i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Your monitors are arranged symmetrically, so centering on the bezel changes nothing."));
+        }
+        return notes.join(" ");
+    }
 
     // The shown context-menu entries, for the "Context Menu…" button's tooltip.
     readonly property var shownMenuEntries: {
@@ -212,51 +302,107 @@ ColumnLayout {
 
         RowLayout {
             Kirigami.FormData.label: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanned images:")
+            enabled: root.spanSettingsApply
             spacing: Kirigami.Units.smallSpacing
 
-            QQC2.ComboBox {
-                id: fitCombo
-                textRole: "text"
-                model: [
-                    {
-                        text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Detect pre-split images"),
-                        help: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Images made of one monitor-shaped part per monitor are split so each part lands on its own monitor. Everything else is treated as one panorama, centered and scaled until all monitors are covered.")
-                    },
-                    {
-                        text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Center on the monitor join"),
-                        help: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Every image is centered horizontally on the edge between your monitors (vertically on your largest monitor) and scaled until all monitors are covered. A two-part wallpaper splits on the bezel; wider or taller images lose more at the edges.")
-                    }
-                ]
-                currentIndex: root.cfg_SpanFit === 1 ? 1 : 0
-                onActivated: (index) => { root.cfg_SpanFit = index; root.stamp(); }
-
-                delegate: QQC2.ItemDelegate {
-                    required property var modelData
-                    required property int index
-                    width: ListView.view ? ListView.view.width : implicitWidth
-                    text: modelData.text
-                    highlighted: fitCombo.highlightedIndex === index
-                    hoverEnabled: true
-                    QQC2.ToolTip.visible: hovered
-                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-                    QQC2.ToolTip.text: modelData.help
-                }
-
-                QQC2.ToolTip.visible: hovered && !popup.visible
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-                QQC2.ToolTip.text: model[currentIndex].help
-            }
-
             QQC2.CheckBox {
-                Layout.leftMargin: Kirigami.Units.largeSpacing
-                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Compensate for pixel size")
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Same physical size on every monitor")
+                enabled: root.pixelSizesDiffer
                 checked: root.cfg_MatchPhysicalSize
                 onToggled: { root.cfg_MatchPhysicalSize = checked; root.stamp(); }
 
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Monitors with different pixel sizes show the same picture at different physical sizes: a 23\" 1080p monitor's pixels are about 14% larger than a 27\" 1440p monitor's. When on, spanned images are scaled per monitor so they have the same real size on every monitor and lines continue straight across the bezel. Uses the size each monitor reports; turn it off if one reports a wrong size.")
+                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Monitors with different pixel sizes show the same picture at different sizes: a 23″ 1080p monitor's pixels are about 14% larger than a 27″ 1440p monitor's. When on, spanned images are scaled per monitor so they have the same real size on every monitor, and lines continue straight across the bezel. This uses the size each monitor reports; correct a wrong one under Monitor Sizes.")
             }
+
+            QQC2.Button {
+                id: sizesButton
+                icon.name: "video-display"
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Monitor Sizes…")
+                onClicked: sizesPopup.opened ? sizesPopup.close() : sizesPopup.open()
+
+                QQC2.ToolTip.visible: hovered && !sizesPopup.visible
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "In use: %1", root.monitors.map(m => m.name + " " + root.inchesText(m.inches)).join(", "))
+                    + "\n" + i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Click to correct a monitor that reports a wrong size")
+
+                QQC2.Popup {
+                    id: sizesPopup
+                    y: sizesButton.height
+
+                    contentItem: ColumnLayout {
+                        spacing: Kirigami.Units.smallSpacing
+
+                        QQC2.Label {
+                            Layout.maximumWidth: Kirigami.Units.gridUnit * 22
+                            wrapMode: Text.Wrap
+                            text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Each monitor's size, measured diagonally, as the monitor reports it. If one is wrong, enter the right one.")
+                        }
+
+                        Repeater {
+                            model: root.monitors
+
+                            delegate: RowLayout {
+                                id: monitorRow
+                                required property var modelData
+                                spacing: Kirigami.Units.smallSpacing
+
+                                QQC2.Label {
+                                    Layout.fillWidth: true
+                                    Layout.minimumWidth: Kirigami.Units.gridUnit * 8
+                                    text: monitorRow.modelData.name
+                                }
+
+                                // In tenths of an inch.
+                                QQC2.SpinBox {
+                                    from: 50
+                                    to: 1500
+                                    editable: true
+                                    value: Math.round(monitorRow.modelData.inches * 10)
+                                    textFromValue: (value, locale) => root.inchesText(value / 10)
+                                    valueFromText: (text, locale) => Math.round(parseFloat(text.replace(",", ".")) * 10)
+                                    validator: RegularExpressionValidator {
+                                        regularExpression: /\d{0,3}([.,]\d?)?\s*[″"]?/
+                                    }
+                                    onValueModified: root.setMonitorSize(monitorRow.modelData, value / 10)
+                                }
+
+                                QQC2.ToolButton {
+                                    icon.name: "edit-undo"
+                                    opacity: monitorRow.modelData.corrected ? 1 : 0
+                                    enabled: monitorRow.modelData.corrected
+                                    onClicked: root.setMonitorSize(monitorRow.modelData, 0)
+
+                                    QQC2.ToolTip.visible: hovered
+                                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                                    QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Back to the reported size, %1", root.inchesText(monitorRow.modelData.reported))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        QQC2.CheckBox {
+            enabled: root.spanSettingsApply && root.joinMatters
+            text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Center on the bezel between the monitors")
+            checked: root.cfg_SpanFit === 1
+            onToggled: { root.cfg_SpanFit = checked ? 1 : 0; root.stamp(); }
+
+            QQC2.ToolTip.visible: hovered
+            QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+            QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "For spanned images that aren't made of one part per monitor; those always split on the bezels. Off: the image is centered on your monitors as a whole, which cuts off the least. On: its middle goes on the bezel between the two middle monitors (with an odd number, on the middle monitor's center), so a two-part wallpaper made for other monitors, such as two 16:10 halves, still splits on the bezel. More is cut off at the edges.")
+        }
+
+        QQC2.Label {
+            visible: text !== ""
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 26
+            wrapMode: Text.Wrap
+            font: Kirigami.Theme.smallFont
+            color: Kirigami.Theme.disabledTextColor
+            text: root.spanNote
         }
     }
 

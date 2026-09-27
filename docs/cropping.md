@@ -6,8 +6,8 @@ This plugin shows images two ways:
   monitor and cropped evenly from both sides (Qt's `PreserveAspectCrop`).
   Nothing is shared between monitors.
 - **Spanned** images: one image across all monitors. The rest of this
-  document is about these. The code is `deskLayout()` and
-  `computeGeomFor()` in `contents/ui/main.qml`.
+  document is about these. The code is `layout()` and `joinBox()` in
+  `contents/ui/desk.js`, and `computeGeomFor()` in `contents/ui/main.qml`.
 
 The [interactive version](https://vasilkalchev.github.io/plasma-multi-monitor-slideshow/cropping.html)
 (`docs/cropping.html`) runs the same math on a monitor layout and pictures of
@@ -30,9 +30,9 @@ even though a screenshot would look perfect.
 
 So every spanned image is placed on a "desk" instead: the monitors' real
 physical arrangement, measured in pixels of the largest monitor. The
-largest is the one with the largest physical area (with **Compensate for
-pixel size** off, or when a monitor doesn't report its size, the one with
-the most pixels). Here it's the right monitor. Each monitor gets a factor
+largest is the one with the largest physical area (with **Same physical
+size on every monitor** off, or when a monitor's size is unknown, the one
+with the most pixels). Here it's the right monitor. Each monitor gets a factor
 `f`: how many of the largest monitor's pixels one of its own pixels
 covers.
 
@@ -56,55 +56,35 @@ Where each monitor goes on the desk follows Display Configuration:
   bottom-aligned stays bottom-aligned.
 
 The pixel sizes come from Qt's `pixelDensity`, which comes from the size
-the monitor reports (its EDID). If a monitor reports a wrong size, turn off
-**Compensate for pixel size** in the settings, which sets every `f` to 1.
+the monitor reports (its EDID). If a monitor reports a wrong size, enter
+the right diagonal under **Monitor Sizes…** in the settings; the plugin
+then works out its pixel size from that and its resolution. With **Same
+physical size on every monitor** off, every `f` is 1.
 
 With identical monitors every `f` is 1 and the desk is just the pixel
 layout.
 
 ## Step 2: place the image on the desk
 
-The **Spanned images** setting picks one of two behaviours.
+### Pre-split images
 
-### Center on the monitor join
+The image is cut into as many equal slices as there are monitors. If a
+slice has the monitor's shape (within 3%), the image is pre-split: each
+slice is one unit the size of the largest monitor on the desk, placed so
+the largest monitor's own slice sits exactly on it. Every other monitor is
+physically smaller, so it fits inside its slice and shows the part of it
+that it covers. These layers use `Image.Stretch`, not `PreserveAspectCrop`
+(see the comment in `computeGeomFor()` for why).
 
-1. The image's center goes on the join between the monitors horizontally
-   (desk x = 1920), and on the middle of the largest monitor vertically
-   (desk y = 720). With an odd number of monitors, the horizontal center is
-   the middle of the middle monitor.
-2. The image is scaled, keeping its shape, until it covers every monitor
-   around that point. The monitor farthest from the center sets the size:
-   the right monitor reaches 2560 to the right, and its top and bottom are
-   720 away. So the image must cover a 5120 x 1440 box from desk x −640 to
-   4480.
-
-A two-part 32:9 image (for example 5120x1440 or 3840x1080) fits that box
-exactly, so its middle seam lands on the bezel:
+A two-part 32:9 image (for example 5120x1440 or 3840x1080) is pre-split on
+the example monitors. Each slice is 2560 x 1440 desk pixels, and the right
+monitor's slice sits on it, so the image covers desk x −640 to 4480 and
+its middle seam lands on the bezel:
 
 - The right monitor shows the right half, complete.
 - The left monitor shows the left half at the same physical size. It
   covers desk x −266 to 1920, so it loses the left 374 px of that half
   (15%), and 120 px at the top and 90 px at the bottom.
-
-Any other shape is scaled until it covers the box, and the excess is cut
-evenly. For example, a 21:9 image (3440x1440) becomes 5120 wide and 2143
-tall, so about 16% of its height is cut at the top and 16% at the bottom.
-
-### Detect pre-split images (default)
-
-The image is cut into as many equal slices as there are monitors. If a
-slice has the monitor's shape (within 3%), the image is treated as
-pre-split: each slice is one unit the size of the largest monitor on the
-desk, placed so the largest monitor's own slice sits exactly on it. Every
-other monitor is physically smaller, so it fits inside its slice and shows
-the part of it that it covers. For two monitors that gives the same result
-as "Center on the monitor join" above. These layers use `Image.Stretch`,
-not `PreserveAspectCrop` (see the comment in `computeGeomFor()` for why).
-
-Otherwise the image is treated as a panorama: scaled to cover the box
-around all monitors on the desk (desk x −266 to 4480, y 0 to 1440, so
-4746 x 1440), centered on it, with the overhang cut evenly. The 21:9
-example loses about 14% at the top and 14% at the bottom here.
 
 Each monitor runs the pre-split test against its own shape. If the
 monitors have different shapes (say a 16:9 and a 16:10), a picture can be
@@ -113,9 +93,40 @@ up at the join.
 
 A pre-split image is only recognized at the monitor count it was made for.
 A two-part image on three monitors is cut into three slices that don't
-match any monitor, so it becomes a panorama with its seam in the middle of
-the middle monitor. "Center on the monitor join" puts the center on the
-middle monitor's center with an odd count, so the same happens there.
+match any monitor, so it becomes a panorama.
+
+### Panoramas
+
+Any other image is a panorama: it's scaled, keeping its shape, until it
+covers a box on the desk, and the overhang is cut evenly. Which box
+depends on **Center on the bezel between the monitors**.
+
+**Off (the default):** the box around all monitors, desk x −266 to 4480
+and y 0 to 1440, so 4746 x 1440, with the image centered on it. This cuts
+off the least. A 21:9 image (3440x1440) becomes 4746 wide and 1987 tall,
+so it loses about 14% at the top and 14% at the bottom.
+
+**On:** the image's center goes on the join between the monitors
+horizontally (desk x = 1920), and on the middle of the largest monitor
+vertically (desk y = 720). With an odd number of monitors, the horizontal
+center is the middle of the middle monitor. The box is the smallest one
+around that point that covers every monitor: the right monitor reaches
+2560 to the right, and its top and bottom are 720 away, so the box is
+5120 x 1440, from desk x −640 to 4480.
+
+- The 21:9 image becomes 5120 wide and 2143 tall, so it loses about 16% at
+  the top and 16% at the bottom.
+- A two-part image made for other monitors, like two 16:10 halves
+  (3840x1200), isn't pre-split on 16:9 monitors, but its seam still lands
+  on the bezel. It becomes 5120 x 1600, losing 5% at the top and 5% at the
+  bottom. With the setting off, its seam would land 187 desk pixels into
+  the right monitor.
+- A two-part image on three monitors has its seam in the middle of the
+  middle monitor.
+
+When the join is already the middle of the monitors (identical monitors,
+lined up), both boxes are the same, and the settings page grays the
+setting out.
 
 With a single monitor, a spanned image is placed like an individual one.
 

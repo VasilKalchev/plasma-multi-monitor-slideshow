@@ -34,17 +34,17 @@
       <div class="rule">
         <span class="eyebrow">First</span>
         <b>Lay the monitors out by real size</b>
-        <p>With "Compensate for pixel size" on, a monitor with bigger pixels takes more room than its pixel count suggests, so the picture keeps its real size on every monitor. Monitors stay touching, and each keeps its vertical alignment from Display Configuration.</p>
+        <p>With "Same physical size on every monitor" on, a monitor with bigger pixels takes more room than its pixel count suggests, so the picture keeps its real size on every monitor. Monitors stay touching, and each keeps its vertical alignment from Display Configuration.</p>
       </div>
       <div class="rule">
-        <span class="eyebrow">Center on the monitor join</span>
-        <b>Centered on the bezel</b>
-        <p>The picture's middle goes on the middle join between the monitors (the middle monitor's center with an odd count), and on the middle of the largest monitor vertically. It's scaled, keeping its shape, until every monitor is covered. The overhang is cut.</p>
+        <span class="eyebrow">Pre-split pictures</span>
+        <b>One slice per monitor</b>
+        <p>If cutting the picture into one slice per monitor gives monitor-shaped slices (within 3%), each slice goes to one monitor, with the joins on the bezels.</p>
       </div>
       <div class="rule">
-        <span class="eyebrow">Detect pre-split images</span>
-        <b>Slices, or one panorama</b>
-        <p>If cutting the picture into one slice per monitor gives monitor-shaped slices (within 3%), each slice goes to one monitor. Otherwise the picture is scaled to cover the box around all monitors, centered on it.</p>
+        <span class="eyebrow">Panoramas</span>
+        <b>Centered, cut to cover</b>
+        <p>Any other picture is scaled, keeping its shape, until every monitor is covered, and the overhang is cut. It's centered on the monitors as a whole, or with "Center on the bezel between the monitors", on the middle join (the middle monitor's center with an odd count) and on the middle of the largest monitor.</p>
       </div>
     </div>
     <p class="note">Individual (non-spanning) folders are simpler: each monitor fills itself with its own picture, cropped evenly to its own shape.</p>
@@ -57,11 +57,8 @@
     <div class="mons" id="mons"></div>
     <div><button type="button" id="addMon">Add monitor</button></div>
     <div class="controls">
-      <div class="seg" role="group" aria-label="Spanned images">
-        <button type="button" id="modeDetect" aria-pressed="true">Detect pre-split images</button>
-        <button type="button" id="modeJoin" aria-pressed="false">Center on the monitor join</button>
-      </div>
-      <label class="toggle"><input type="checkbox" id="physToggle" checked> Compensate for pixel size</label>
+      <label class="toggle"><input type="checkbox" id="physToggle" checked> Same physical size on every monitor</label>
+      <label class="toggle"><input type="checkbox" id="joinToggle"> Center on the bezel between the monitors</label>
     </div>
     <p class="pitch" id="pitchNote"></p>
     <div class="ruler" id="ruler" aria-label="Picture shapes, as width to height"></div>
@@ -137,7 +134,7 @@
     });
   }
 
-  // ---- geometry: a straight port of deskLayout() and computeGeomFor() in main.qml ----
+  // ---- geometry: a straight port of desk.js and computeGeomFor() in main.qml ----
   function deskLayout(sc) {
     const list = sc.map(s => ({ ...s }));
     const known = list.every(d => isFinite(d.density) && d.density > 0);
@@ -182,14 +179,12 @@
   function place(desk, me, iw, ih) {
     const n = desk.list.length;
     let kind, box, stretch = false;
-    if (state.join) { kind = "join"; box = joinBox(desk); }
-    else {
-      const unitAspect = (iw / n) / ih, myAspect = me.w / me.h;
-      if (Math.abs(unitAspect - myAspect) / myAspect < 0.03) {
-        kind = "split"; stretch = true;
-        box = { x: desk.ref.dx - desk.refIndex * desk.ref.dw, y: desk.ref.dy, w: desk.ref.dw * n, h: desk.ref.dh };
-      } else { kind = "pano"; box = desk.box; }
-    }
+    const unitAspect = (iw / n) / ih, myAspect = me.w / me.h;
+    if (Math.abs(unitAspect - myAspect) / myAspect < 0.03) {
+      kind = "split"; stretch = true;
+      box = { x: desk.ref.dx - desk.refIndex * desk.ref.dw, y: desk.ref.dy, w: desk.ref.dw * n, h: desk.ref.dh };
+    } else if (state.join) { kind = "join"; box = joinBox(desk); }
+    else { kind = "pano"; box = desk.box; }
     if (stretch) return { kind, box, ox: box.x, oy: box.y, kx: box.w / iw, ky: box.h / ih };
     const s = Math.max(box.w / iw, box.h / ih);
     return { kind, box, ox: box.x + (box.w - iw * s) / 2, oy: box.y + (box.h - ih * s) / 2, kx: s, ky: s };
@@ -334,7 +329,7 @@
     };
     if (A.kind === "join") {
       const b = A.per[0].p.box;
-      out.push(`<p>Centered on the ${n % 2 === 0 ? "middle join" : "middle monitor"} and on the middle of ${refName}, the picture has to cover a <span class="num">${R(b.w)}×${R(b.h)}</span> box (<span class="num">${ar(b.w / b.h)}</span>, in ${ref.name}'s pixels) to reach every monitor. ${cut(b)}</p>`);
+      out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't a monitor shape. So it's a panorama. ` : ""}Centered on the ${n % 2 === 0 ? "middle join" : "middle monitor"} and on the middle of ${refName}, it has to cover a <span class="num">${R(b.w)}×${R(b.h)}</span> box (<span class="num">${ar(b.w / b.h)}</span>, in ${ref.name}'s pixels) to reach every monitor. ${cut(b)}</p>`);
     } else if (A.kind === "split") {
       out.push(n > 1
         ? `<p>Cut into ${n} slices, each is <span class="num">${ar((iw / n) / ih)}</span>, within 3% of the monitors' shape. So it's pre-split: one slice per monitor, placed so the slice of ${refName} sits exactly on it. The other monitors show the part of their slice they physically cover.</p>`
@@ -352,7 +347,7 @@
     return out.join("");
   }
 
-  const KIND_CHIP = { join: ["split", "Centered on the join"], split: ["split", "Pre-split"], pano: ["pano", "Panorama"], mixed: ["pano", "Mixed"] };
+  const KIND_CHIP = { join: ["pano", "Panorama on the join"], split: ["split", "Pre-split"], pano: ["pano", "Panorama"], mixed: ["pano", "Mixed"] };
   function renderCase(host, spec) {
     const A = analyse(spec.iw, spec.ih), [cls, txt] = KIND_CHIP[A.kind];
     host.innerHTML = `
@@ -431,27 +426,20 @@
     const aspects = [fa, n * Math.max(...shapes) * 1.03, state.custom.iw / state.custom.ih, ...EXAMPLES.map(e => e.iw / e.ih)];
     const lo = 1, hi = Math.max(5, Math.ceil(Math.max(...aspects) + 0.5));
     const P = v => ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * 100) + "%";
-    let html = `<div class="track"></div>`, legend, note;
-    if (state.join) {
-      html += `<div class="fit" style="left:${P(fa)}"></div>`;
-      legend = `<span><i class="sw" style="background:var(--ink);width:2px"></i>${ar(fa)} fits exactly (${R(b.w)}×${R(b.h)})</span>`;
-      note = `Centered on the join, a <span class="num">${ar(fa)}</span> picture fits exactly. Narrower pictures lose top and bottom, wider ones lose the sides.`;
-    } else {
-      shapes.forEach(m => { const x = n * m * 0.97, y = n * m * 1.03; html += `<div class="band" style="left:${P(x)};width:calc(${P(y)} - ${P(x)})"></div>`; });
-      html += `<div class="fit" style="left:${P(fa)}"></div>`;
-      legend = `<span><i class="sw" style="background:var(--chip-split-ink)"></i>pre-split range</span><span><i class="sw" style="background:var(--chip-pano);border:1px solid var(--line)"></i>panorama</span><span><i class="sw" style="background:var(--ink);width:2px"></i>${ar(fa)} panorama fits exactly</span>`;
-      note = shapes.length === 1
-        ? `With ${n} monitor${n > 1 ? "s" : ""}, anything between <span class="num">${ar(n * shapes[0] * 0.97)}</span> and <span class="num">${ar(n * shapes[0] * 1.03)}</span> is pre-split. Anything else is a panorama: narrower than <span class="num">${ar(fa)}</span> loses top and bottom, wider loses the sides.`
-        : `Your monitors have different shapes, so each runs the pre-split test for its own shape (one band each).`;
-    }
+    let html = `<div class="track"></div>`;
+    shapes.forEach(m => { const x = n * m * 0.97, y = n * m * 1.03; html += `<div class="band" style="left:${P(x)};width:calc(${P(y)} - ${P(x)})"></div>`; });
+    html += `<div class="fit" style="left:${P(fa)}"></div>`;
+    const legend = `<span><i class="sw" style="background:var(--chip-split-ink)"></i>pre-split range</span><span><i class="sw" style="background:var(--chip-pano);border:1px solid var(--line)"></i>panorama</span><span><i class="sw" style="background:var(--ink);width:2px"></i>${ar(fa)} panorama fits exactly</span>`;
+    const pano = `Anything else is a panorama${state.join ? ", centered on the join" : ""}: narrower than <span class="num">${ar(fa)}</span> loses top and bottom, wider loses the sides.`;
+    const note = shapes.length === 1
+      ? `With ${n} monitor${n > 1 ? "s" : ""}, anything between <span class="num">${ar(n * shapes[0] * 0.97)}</span> and <span class="num">${ar(n * shapes[0] * 1.03)}</span> is pre-split. ${pano}`
+      : `Your monitors have different shapes, so each runs the pre-split test for its own shape (one band each). ${pano}`;
     [16, 21, 32, 48, 64].forEach(w => { if (w / 9 > lo && w / 9 <= hi) html += `<span class="tick" style="left:${P(w / 9)}">${w}:9</span>`; });
     EXAMPLES.forEach((e, i) => { html += `<span class="mk" style="left:${P(e.iw / e.ih)}">${i + 1}</span>`; });
     const c = state.custom; html += `<span class="mk" style="left:${P(c.iw / c.ih)};color:var(--accent)">yours</span>`;
     document.getElementById("ruler").innerHTML = html;
     document.getElementById("legend").innerHTML = legend;
     document.getElementById("rulerNote").innerHTML = note;
-    document.getElementById("modeJoin").setAttribute("aria-pressed", String(state.join));
-    document.getElementById("modeDetect").setAttribute("aria-pressed", String(!state.join));
   }
 
   // ---- page ----
@@ -468,8 +456,7 @@
     renderTry();
   }
 
-  document.getElementById("modeJoin").addEventListener("click", () => { state.join = true; renderAll(); });
-  document.getElementById("modeDetect").addEventListener("click", () => { state.join = false; renderAll(); });
+  document.getElementById("joinToggle").addEventListener("change", e => { state.join = e.target.checked; renderAll(); });
   document.getElementById("physToggle").addEventListener("change", e => { state.phys = e.target.checked; renderAll(); });
   const tw = document.getElementById("tw"), th = document.getElementById("th");
   function fromInputs() {

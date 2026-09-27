@@ -13,6 +13,7 @@ together. [cropping.md](cropping.md) covers the placement math in detail.
 | `contents/ui/main.qml` | The wallpaper on one screen: scanning folders, placing and showing pictures, the right-click menu. |
 | `contents/ui/SpanState.qml` | State shared by every screen: the image lists, the timer and the current turn. |
 | `contents/ui/ImageLayer.qml` | One of the two crossfading picture layers on a screen. |
+| `contents/ui/desk.js` | The desk that spanned pictures are laid out on (see below), used by `main.qml` and `config.qml`. |
 | `contents/ui/config.qml` | The settings page. |
 | `contents/ui/FolderListSection.qml` | One folder list on the settings page. |
 | `contents/ui/FolderImages.qml` | The thumbnail grid on the settings page. |
@@ -80,18 +81,20 @@ the same layout and then draws only its own part:
 1. **The desk.** The screens are laid out as they physically sit next to
    each other, measured in pixels of the largest screen. A screen with
    bigger pixels takes more room on the desk than its pixel count suggests.
-   The pixel sizes come from the sizes the monitors report. Vertical
+   The pixel sizes come from the sizes the monitors report, or from the
+   user's corrections in **Monitor Sizes…** (kept per make and model, in
+   `MonitorSizes`). Vertical
    alignment follows Display Configuration: a screen aligned to the top of
    the largest one stays aligned to its top.
-2. **The picture's box.** The picture gets a box on the desk. With **Detect
-   pre-split images**, the plugin first checks the picture's shape (read
-   from a small, fast decode of the image). If cutting it into one slice
-   per screen gives screen-shaped slices, each slice becomes one unit the
-   size of the largest screen, laid side by side so the largest screen's
-   slice sits exactly on it. Otherwise the box is the rectangle around all
-   screens, and the picture is scaled to cover it. With **Center on the
-   monitor join**, the box is centered on the middle join and on the middle
-   of the largest screen, and just large enough to reach every screen.
+2. **The picture's box.** The picture gets a box on the desk. The plugin
+   first checks the picture's shape (read from a small, fast decode of the
+   image). If cutting it into one slice per screen gives screen-shaped
+   slices, each slice becomes one unit the size of the largest screen, laid
+   side by side so the largest screen's slice sits exactly on it.
+   Otherwise the picture is a panorama, scaled to cover a box: the
+   rectangle around all screens, or with **Center on the bezel between the
+   monitors**, a box centered on the middle join and on the middle of the
+   largest screen, just large enough to reach every screen.
 3. **Back to the screen.** Each screen converts the box from desk units to
    its own pixels and draws the picture layer there. The parts outside the
    screen are clipped.
@@ -122,6 +125,15 @@ neither is decoded once at thumbnail size and saved as a small JPEG in
 `~/.cache/com.github.vasilkalchev.multimonitorslideshow/thumbnails`. Thumbnails load two at
 a time, visible ones first, top to bottom. Each time the page opens,
 thumbnails that haven't been read for 60 days are deleted.
+
+The page also lays out the desk (with `desk.js`, like the wallpaper) to
+find the spanned-picture settings that make no difference for the
+connected monitors: **Same physical size on every monitor** when all
+monitors have the same pixel size, **Center on the bezel between the
+monitors** when the middle join is already the middle of the monitors.
+Those are grayed out, with the reason below them. **Monitor Sizes…** shows
+each monitor's reported size and saves a correction as
+`<make> <model>=<inches>` in `MonitorSizes`.
 
 ## The right-click menu
 

@@ -25,25 +25,30 @@ import QtQml.Models
 import Qt.labs.folderlistmodel
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
+import "desk.js" as Desk
 
 WallpaperItem {
     id: root
 
     readonly property var cfg: root.configuration
 
-    // SpanFit: 0 = detect pre-split images (one slice per monitor) and fall
-    // back to a cover-fit over the whole desktop for anything else; 1 =
-    // always center the image on the join between the monitors (and
-    // vertically on the largest screen) and cover-fit around that.
+    // SpanFit: where a panorama (a spanned image that isn't pre-split, see
+    // computeGeomFor()) is centered: 0 = on the box around all monitors,
+    // 1 = on the join between the monitors (and vertically on the largest
+    // screen).
     // MatchPhysicalSize: scale each screen by its pixel size so a spanned
-    // image has the same physical size on every monitor (see deskLayout()).
-    // Recompute both layers right away when either changes, in case the
-    // config change does reach this instance (otherwise it applies on the
-    // next tick, like the folder lists).
+    // image has the same physical size on every monitor (see desk.js).
+    // MonitorSizes: the user's corrections for monitors that report a
+    // wrong size.
+    // Recompute both layers right away when any of them changes, in case
+    // the config change does reach this instance (otherwise it applies on
+    // the next tick, like the folder lists).
     readonly property int spanFit: cfg.SpanFit === 1 ? 1 : 0
     readonly property bool matchPhysicalSize: cfg.MatchPhysicalSize !== false
+    readonly property var monitorSizes: Desk.parseSizes(cfg.MonitorSizes)
     onSpanFitChanged: refreshGeometry()
     onMatchPhysicalSizeChanged: refreshGeometry()
+    onMonitorSizesChanged: refreshGeometry()
 
     readonly property bool isSpanTurn: SpanState.isSpanTurn
     property string currentSource: isSpanTurn ? SpanState.currentSpanImage : computeMySingleSource()
@@ -398,7 +403,7 @@ WallpaperItem {
     // copy its values into their own config, so the dialog on any screen
     // shows (and edits) the same settings.
     readonly property var sharedKeys: ["SpanPaths", "SinglePaths", "DisabledPaths", "SlideInterval", "SlideshowOrder", "SpanFit",
-        "MatchPhysicalSize", "ShowWallpaperHeader", "ShowOpenImageAction",
+        "MatchPhysicalSize", "MonitorSizes", "ShowWallpaperHeader", "ShowOpenImageAction",
         "ShowNextAction", "ShowNextIndividualAction", "ShowNextSpannedAction"]
 
     function _stampOf(value) {
@@ -468,103 +473,23 @@ WallpaperItem {
     readonly property real myVX: Screen.virtualX
     readonly property real myVY: Screen.virtualY
 
-    // All span geometry is worked out on a shared "desk": the real, physical
-    // arrangement of the screens, measured in the largest screen's pixels.
-    // Screens differ in pixel size (a 23" 1080p pixel is ~14% bigger than a
-    // 27" 1440p one), so mapping the image pixel-for-pixel across screens
-    // makes it visibly larger on the coarser one even though a screenshot
-    // looks perfect. Each screen's `f` is how many reference pixels one of
-    // its own pixels spans (from Qt's pixelDensity, i.e. the monitor's EDID
-    // size); 1 when MatchPhysicalSize is off or a screen's size is unknown.
-    //
-    // Placement on the desk follows the display configuration:
-    // horizontally, screens are chained outward from the reference screen
-    // so neighbors stay touching (any pixel gap is kept); vertically, a
-    // screen keeps its relative alignment against the reference - top,
-    // centered, bottom, or anything in between - measured as a fraction of
-    // the height difference. This assumes one row of screens, like the
-    // pre-split format itself.
+    // All span geometry is worked out on a shared "desk" (see desk.js),
+    // plus which screen on it is this one.
     function deskLayout() {
-        var screens = Qt.application.screens;
-        var list = [];
-        var known = true;
-        for (var i = 0; i < screens.length; i++) {
-            var s = screens[i];
-            var d = { name: s.name, x: s.virtualX, y: s.virtualY, w: s.width, h: s.height, density: s.pixelDensity };
-            list.push(d);
-            known = known && isFinite(d.density) && d.density > 0;
-        }
-        // The reference is the largest screen: by its real size when every
-        // screen reports one, else by pixel count. A pre-split image's slices
-        // are sized to it (see computeGeomFor()), so every other screen has
-        // to fit inside one slice; by pixel count alone, a big screen with
-        // few pixels (a TV) overflowed its slice.
-        var usePhys = root.matchPhysicalSize && known;
-        function size(d) {
-            return usePhys ? (d.w / d.density) * (d.h / d.density) : d.w * d.h;
-        }
-        var ref = null;
-        for (var r0 = 0; r0 < list.length; r0++) {
-            if (ref === null || size(list[r0]) > size(ref)) {
-                ref = list[r0];
-            }
-        }
-        // Ordered left-to-right, then top-to-bottom among screens sharing a
-        // virtualX; screens sharing both coordinates are mirrored and share
-        // an index. Ordering on virtualX alone collapsed a stacked pair to
-        // one index.
-        list.sort(function (a, b) { return (a.x - b.x) || (a.y - b.y); });
-        var refIndex = list.indexOf(ref);
-        for (var j = 0; j < list.length; j++) {
-            var e = list[j];
-            e.f = usePhys ? ref.density / e.density : 1;
-            e.dw = e.w * e.f;
-            e.dh = e.h * e.f;
-            var dh = ref.h - e.h;
-            e.dy = Math.abs(dh) < 1 ? e.y
-                 : ref.y + (e.y - ref.y) / dh * (ref.h - e.dh);
-        }
-        ref.dx = ref.x;
-        for (var l = refIndex - 1; l >= 0; l--) {
-            var gapL = list[l + 1].x - (list[l].x + list[l].w);
-            list[l].dx = list[l + 1].dx - gapL - list[l].dw;
-        }
-        for (var r = refIndex + 1; r < list.length; r++) {
-            var gapR = list[r].x - (list[r - 1].x + list[r - 1].w);
-            list[r].dx = list[r - 1].dx + list[r - 1].dw + gapR;
-        }
+        var desk = Desk.layout(Qt.application.screens, root.matchPhysicalSize, root.monitorSizes);
         // Find this screen by connector name first: while the layout is
         // changing, this item's own position can lag behind the screen list,
         // and a position match would then pick the wrong screen.
-        var me = list[0];
-        for (var m = 0; m < list.length; m++) {
-            if (root.myScreenName !== "" ? list[m].name === root.myScreenName
-                                         : (list[m].x === root.myVX && list[m].y === root.myVY)) {
-                me = list[m];
+        desk.me = desk.list[0];
+        for (var m = 0; m < desk.list.length; m++) {
+            var d = desk.list[m];
+            if (root.myScreenName !== "" ? d.name === root.myScreenName
+                                         : (d.x === root.myVX && d.y === root.myVY)) {
+                desk.me = d;
                 break;
             }
         }
-        var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        for (var k = 0; k < list.length; k++) {
-            minX = Math.min(minX, list[k].dx);
-            minY = Math.min(minY, list[k].dy);
-            maxX = Math.max(maxX, list[k].dx + list[k].dw);
-            maxY = Math.max(maxY, list[k].dy + list[k].dh);
-        }
-        return { list: list, ref: ref, refIndex: refIndex, me: me,
-                 box: { x: minX, y: minY, w: maxX - minX, h: maxY - minY } };
-    }
-
-    // Horizontal middle of the screen row on the desk, counted in screens,
-    // not pixels: with an even count, the bezel between the two middle
-    // screens; with an odd count, the center of the middle screen.
-    function middleJoinX(desk) {
-        var n = desk.list.length;
-        if (n % 2 === 0) {
-            return desk.list[n / 2].dx;
-        }
-        var mid = desk.list[(n - 1) / 2];
-        return mid.dx + mid.dw / 2;
+        return desk;
     }
 
     // This screen's place in the row of screens, left to right, counting
@@ -615,22 +540,6 @@ WallpaperItem {
             };
         }
 
-        if (root.spanFit === 1) {
-            // Centered on the join between monitors: the image's center goes
-            // on the middle bezel horizontally and on the largest screen's
-            // middle vertically, and it's scaled until every screen is
-            // covered. The box is the smallest rectangle centered on that
-            // point that contains every screen; PreserveAspectCrop then
-            // cover-fits the image into it, centered, so no probe size is
-            // needed. A two-part image's seam lands on the bezel whenever its
-            // halves match the screens' shape.
-            var cx = middleJoinX(desk);
-            var cy = ref.dy + ref.dh / 2;
-            var halfW = Math.max(cx - desk.box.x, desk.box.x + desk.box.w - cx);
-            var halfH = Math.max(cy - desk.box.y, desk.box.y + desk.box.h - cy);
-            return toLocal({ x: cx - halfW, y: cy - halfH, w: 2 * halfW, h: 2 * halfH }, false);
-        }
-
         if (probeSize.width > 0 && probeSize.height > 0) {
             // Some "span" wallpapers are pre-composed as N equal-width
             // halves/thirds/etc., one per monitor (common for "dual
@@ -664,9 +573,14 @@ WallpaperItem {
                 }, true);
             }
         }
-        // Continuous panorama: cover-fit the whole image onto the box
-        // around every screen on the desk, then crop out this screen.
-        return toLocal(desk.box, false);
+        // A continuous panorama: cover-fit (PreserveAspectCrop) onto a box
+        // on the desk, then crop out this screen. By default the box around
+        // every screen, which cuts off the least. Centered on the join, the
+        // image's middle stays on the middle bezel, like a pre-split
+        // image's seam, even when the screens differ in size: for two-part
+        // images made for other monitor shapes (two 16:10 halves on 16:9
+        // screens), which the pre-split test above doesn't take.
+        return toLocal(root.spanFit === 1 ? Desk.joinBox(desk) : desk.box, false);
     }
 
     // Plasma keeps its splash screen up until `loading` clears. It clears

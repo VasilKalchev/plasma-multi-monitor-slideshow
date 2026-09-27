@@ -22,7 +22,7 @@ the same moment.
 - **Same physical size on every monitor.** On monitors with different
   pixel sizes (say a 24" 1080p next to a 27" 1440p), a spanned picture is
   scaled per monitor, so it keeps its real size and straight lines continue
-  across the bezel.
+  across the bezel. A monitor that reports a wrong size can be corrected.
 - **Pre-split wallpapers land on the right monitors.** A wallpaper made of
   one part per monitor is detected, and each part goes to its own monitor
   with the join on the bezel. Anything else is shown as one panorama.
@@ -92,8 +92,13 @@ afterwards, restart Plasma:
 | **Change every** | How long each picture stays up. |
 | **Order** | **Random** shuffles all pictures, spanned and individual together. **A to Z**, **Z to A**, **Newest first** and **Oldest first** go through them by file name or date modified. On an individual turn, the monitors show the next pictures in line, left to right. |
 | **Context Menu…** | Which entries the desktop's right-click menu shows. |
-| **Spanned images** | How spanned pictures are fitted. See below. |
-| **Compensate for pixel size** | Keeps spanned pictures the same physical size on every monitor. Turn it off if a monitor reports a wrong size. |
+| **Same physical size on every monitor** | Scales spanned pictures per monitor, so they have the same real size on monitors with different pixel sizes, and lines continue straight across the bezel. |
+| **Monitor Sizes…** | The size of each monitor, as it reports it. Correct a monitor that reports a wrong size here. |
+| **Center on the bezel between the monitors** | Where a panorama is centered. See below. |
+
+The spanned-picture settings are grayed out when they make no difference,
+for example when your monitors are identical and lined up, and the reason
+is shown below them.
 
 Each folder has a tickbox: untick it to leave the folder out of the
 slideshow without removing it. Click a folder to see its pictures on the
@@ -103,23 +108,25 @@ folder in your file manager.
 ### How spanned pictures are fitted
 
 A spanned picture is placed over your monitors as they sit in Display
-Configuration, then cut to what each monitor covers. With **Compensate for
-pixel size** on, it is placed by the monitors' real sizes instead of their
-pixel counts.
+Configuration, then cut to what each monitor covers. With **Same physical
+size on every monitor** on, it is placed by the monitors' real sizes
+instead of their pixel counts.
 
-**Detect pre-split images** (the default): the plugin cuts the picture into
-one equal slice per monitor. If a slice has the shape of your monitor
-(within 3%), the picture is taken as pre-split, and each slice goes to its
-own monitor. For example, a 5120×1440 picture on two 16:9 monitors is two
-2560×1440 slices, one per monitor. Anything else is a panorama: it is
-scaled, keeping its shape, until it covers all monitors, centered on them.
-The overhang is cut evenly.
+**Pre-split pictures:** the plugin cuts the picture into one equal slice
+per monitor. If a slice has the shape of your monitor (within 3%), the
+picture is pre-split, and each slice goes to its own monitor. For example,
+a 5120×1440 picture on two 16:9 monitors is two 2560×1440 slices, one per
+monitor.
 
-**Center on the monitor join**: every picture is centered on the middle
-join between the monitors (on the middle monitor with an odd count) and on
-the middle of your largest monitor vertically, then scaled until it covers
-all monitors. A two-part picture then splits exactly on the bezel between
-two monitors, even if its parts don't exactly match your monitors' shape.
+**Panoramas:** any other picture is scaled, keeping its shape, until it
+covers all monitors, and the overhang is cut evenly. It's centered on your
+monitors as a whole, which cuts off the least. With **Center on the bezel
+between the monitors**, its middle goes on the bezel between the two
+middle monitors (on the middle monitor's center with an odd count) and on
+the middle of your largest monitor vertically. That keeps a two-part
+picture made for other monitors split on the bezel, such as two 16:10
+halves on two 16:9 monitors, but more is cut off at the edges. With
+identical monitors lined up side by side, both give the same result.
 
 Some examples:
 
@@ -177,8 +184,9 @@ the layout you had when you started it, so KWin saves that layout for every
 combination.
 
 **A monitor shows the picture at the wrong size.** The plugin uses the
-physical size each monitor reports. If one reports a wrong size, turn off
-**Compensate for pixel size**.
+physical size each monitor reports, and some report a wrong one (TVs
+especially). Click **Monitor Sizes…** in the settings and enter the
+monitor's real diagonal.
 
 **Checking the alignment.** Put
 [`utils/span-test-5120x1440.png`](utils/span-test-5120x1440.png) in a

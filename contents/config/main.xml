@@ -27,12 +27,16 @@
       <default>0</default>
     </entry>
     <entry name="SpanFit" type="Int">
-      <label>How spanned images are fitted: 0 = detect pre-split images, 1 = center on the monitor join</label>
+      <label>Where spanned images that aren't pre-split are centered: 0 = on all monitors together, 1 = on the join between the monitors</label>
       <default>0</default>
     </entry>
     <entry name="MatchPhysicalSize" type="Bool">
       <label>Scale spanned images so they have the same physical size on every monitor</label>
       <default>true</default>
+    </entry>
+    <entry name="MonitorSizes" type="StringList">
+      <label>Corrected sizes of monitors that report a wrong one, as "make model=diagonal in inches"</label>
+      <default></default>
     </entry>
     <entry name="ConfigStamp" type="String">
       <label>When the settings were last edited (ms since the epoch); the newest settings are shared by every screen</label>

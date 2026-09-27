@@ -10,6 +10,7 @@
 */
 pragma Singleton
 import QtQuick
+import "desk.js" as Desk
 
 QtObject {
     id: root
@@ -53,19 +54,7 @@ QtObject {
     property var _sortKeys: ({})     // url -> { name: lowercase file name, time: ms }
 
     // Screens at distinct positions; mirrored screens show the same image.
-    readonly property int screenCount: {
-        var screens = Qt.application.screens;
-        var seen = {};
-        var n = 0;
-        for (var i = 0; i < screens.length; i++) {
-            var key = screens[i].virtualX + "," + screens[i].virtualY;
-            if (seen[key] === undefined) {
-                seen[key] = true;
-                n++;
-            }
-        }
-        return Math.max(1, n);
-    }
+    readonly property int screenCount: Math.max(1, Desk.screenCount(Qt.application.screens))
 
     // -- deterministic seeded PRNG (mulberry32) --
     function mulberry32(seed) {

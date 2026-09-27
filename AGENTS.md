@@ -94,6 +94,15 @@ working copy is then the live plugin, with no build or install step.
   back the requested size). Only the aspect ratio is used.
 - **Screen identity** comes from the connector name (`Screen.name`), not
   the position, which changes during every display reconfiguration.
+- **The desk math lives in `desk.js`** (`.pragma library`), shared by
+  `main.qml` and `config.qml`: the settings page lays out the same desk to
+  gray out the spanned-image settings that make no difference. Change the
+  placement there, not in a copy.
+- **Monitor size corrections** (`MonitorSizes`) are keyed by
+  `manufacturer + " " + model` (on KWin Wayland, e.g. `AOC 2369` or
+  `Dell Inc. DELL G2724D`; `serialNumber` is empty), so they follow the
+  monitor to another connector. Qt reports an unknown size as 100 DPI,
+  not as 0, so a monitor without an EDID size looks plausible, not missing.
 - **Thumbnails** (`FolderImages.qml`): Qt decodes asynchronous images on
   one thread, newest request first, so the grid starts them itself, two at
   a time, visible cells first. Freedesktop thumbnail files are named by
