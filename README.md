@@ -47,6 +47,9 @@ the same moment.
 2. Click **Get New Plugins…** and search for **Multi-monitor Slideshow**.
 3. Click **Install**.
 
+Its store page is
+[https://store.kde.org/p/2375225](https://store.kde.org/p/2375225/).
+
 ### From a release archive
 
 Download `multi-monitor-slideshow-<version>.tar.gz` from the
