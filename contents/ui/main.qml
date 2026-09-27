@@ -477,13 +477,14 @@ WallpaperItem {
     // plus which screen on it is this one.
     function deskLayout() {
         var desk = Desk.layout(Qt.application.screens, root.matchPhysicalSize, root.monitorSizes);
-        // Find this screen by connector name first: while the layout is
+        // Find this screen by connector name first (a mirrored screen is one
+        // of the names of the entry it shares): while the layout is
         // changing, this item's own position can lag behind the screen list,
         // and a position match would then pick the wrong screen.
         desk.me = desk.list[0];
         for (var m = 0; m < desk.list.length; m++) {
             var d = desk.list[m];
-            if (root.myScreenName !== "" ? d.name === root.myScreenName
+            if (root.myScreenName !== "" ? d.names.indexOf(root.myScreenName) !== -1
                                          : (d.x === root.myVX && d.y === root.myVY)) {
                 desk.me = d;
                 break;

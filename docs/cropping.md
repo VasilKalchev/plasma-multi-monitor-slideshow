@@ -68,7 +68,8 @@ layout.
 
 ### Full-width images
 
-The image is cut into as many equal slices as there are monitors. If a
+The image is cut into as many equal slices as there are monitors
+(mirrored monitors count once). If a
 slice has the monitor's shape (within 3%), the image is full-width, as
 wide as the monitors together: each
 slice is one unit the size of the largest monitor on the desk, placed so

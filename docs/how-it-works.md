@@ -81,7 +81,8 @@ A spanned image has to line up across screens, so every screen works out
 the same layout and then draws only its own part:
 
 1. **The desk.** The screens are laid out as they physically sit next to
-   each other, measured in pixels of the largest screen. A screen with
+   each other, measured in pixels of the largest screen. Mirrored screens
+   (at the same position) are one place on the desk. A screen with
    bigger pixels takes more room on the desk than its pixel count suggests.
    The pixel sizes come from the sizes the monitors report, or from the
    user's corrections in **Monitor Sizes…** (kept per make and model, or

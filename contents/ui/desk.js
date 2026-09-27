@@ -74,14 +74,37 @@ function screenCount(screens) {
 // relative alignment against the reference - top, centered, bottom, or
 // anything in between - measured as a fraction of the height difference.
 // This assumes one row of screens, like the full-width format itself.
+//
+// Mirrored screens (at the same position) are one place on the desk and
+// show the same part of the image; `names` lists them all. Counted
+// separately, they threw off everything that counts screens: the
+// full-width test, where the slices go and which join is the middle one.
+// The one with the most pixels stands for them, and of equal ones the one
+// with the smallest pixels: a TV or projector mirroring a desk monitor
+// mustn't give that place on the desk its own size.
 function layout(screens, matchPhysicalSize, sizes) {
     var list = [];
-    var known = true;
+    var at = {};
     for (var i = 0; i < screens.length; i++) {
         var s = screens[i];
-        var d = { name: s.name, x: s.virtualX, y: s.virtualY, w: s.width, h: s.height, density: density(s, sizes) };
-        list.push(d);
-        known = known && d.density > 0;
+        var d = { name: s.name, names: [s.name], x: s.virtualX, y: s.virtualY, w: s.width, h: s.height, density: density(s, sizes) };
+        var key = d.x + "," + d.y;
+        var twin = at[key];
+        if (twin === undefined) {
+            list.push(d);
+            at[key] = d;
+        } else if (d.w * d.h > twin.w * twin.h
+                   || (d.w * d.h === twin.w * twin.h && d.density > twin.density)) {
+            d.names = twin.names.concat(d.names);
+            list[list.indexOf(twin)] = d;
+            at[key] = d;
+        } else {
+            twin.names.push(d.name);
+        }
+    }
+    var known = true;
+    for (var m = 0; m < list.length; m++) {
+        known = known && list[m].density > 0;
     }
     // The reference is the largest screen: by its real size when every
     // screen's size is known, else by pixel count. A full-width image's
@@ -99,9 +122,8 @@ function layout(screens, matchPhysicalSize, sizes) {
         }
     }
     // Ordered left-to-right, then top-to-bottom among screens sharing a
-    // virtualX; screens sharing both coordinates are mirrored and share
-    // an index. Ordering on virtualX alone collapsed a stacked pair to
-    // one index.
+    // virtualX. Ordering on virtualX alone collapsed a stacked pair to one
+    // index.
     list.sort(function (a, b) { return (a.x - b.x) || (a.y - b.y); });
     var refIndex = list.indexOf(ref);
     for (var j = 0; j < list.length; j++) {

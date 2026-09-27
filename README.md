@@ -18,7 +18,8 @@ the same moment.
 
 - **Any number of monitors, of any size.** Monitors can have different
   resolutions, sizes and heights. A spanned image is laid out over your
-  monitors as they are arranged in Display Configuration.
+  monitors as they are arranged in Display Configuration. Mirrored monitors
+  count as one and show the same part.
 - **Same physical size on every monitor.** On monitors with different
   pixel sizes (say a 24" 1080p next to a 27" 1440p), a spanned image is
   scaled per monitor, so it keeps its real size and straight lines continue
