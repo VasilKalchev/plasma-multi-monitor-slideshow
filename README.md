@@ -85,6 +85,8 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 
 ### Settings
 
+![The Desktop Folder Settings dialog with Multi-monitor Slideshow as the wallpaper type: Change every, Order and Context Menu, the spanned-image options, the individual and spanning folders on the left, and thumbnails of the selected folder on the right](docs/images/settings.png)
+
 | Setting | What it does |
 |---|---|
 | **Change every** | How long each picture stays up. |
@@ -186,7 +188,10 @@ combination.
 **A monitor shows the picture at the wrong size.** The plugin uses the
 physical size each monitor reports, and some report a wrong one (TVs
 especially). Click **Monitor Sizes…** in the settings and enter the
-monitor's real diagonal.
+monitor's real diagonal. An arrow appears next to a corrected size to go
+back to the reported one.
+
+![The Monitor Sizes popup: each monitor by make, model and connector, with its diagonal in inches](docs/images/monitor-sizes.png)
 
 **Checking the alignment.** Put
 [`utils/span-test-5120x1440.png`](utils/span-test-5120x1440.png) in a

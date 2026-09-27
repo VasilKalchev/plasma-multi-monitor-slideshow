@@ -46,8 +46,7 @@ script refuses to replace a folder that is a git checkout.
   (`journalctl _COMM=kcmshell6`); it is narrower. The desktop's
   right-click → Desktop and Wallpaper (Desktop Folder Settings) runs
   inside plasmashell, so it needs a deploy with the restart and logs with
-  the shell;
-  open it with `qdbus org.kde.plasmashell /PlasmaShell
+  the shell; open it with `qdbus org.kde.plasmashell /PlasmaShell
   org.kde.PlasmaShell.evaluateScript 'desktops()[0].showConfigurationInterface()'`.
   Check layout changes in both. Plasma creates the page twice (a throwaway
   copy to find the `cfg_` properties, then the real one), so
@@ -55,11 +54,25 @@ script refuses to replace a folder that is a git checkout.
 - `main.qml` can't run under the `qml` tool (it needs `WallpaperItem` and
   Plasma's imports), so verifying means deploying and restarting the
   shell.
+- **Screenshots of the settings** (`docs/images/settings.png`, the
+  Desktop Folder Settings dialog, and `monitor-sizes.png`) are
+  `grabToImage()` captures made from inside the page, so no other window
+  can end up in them. Copy the plugin files (with `utils/`) to a scratch
+  folder, add a temporary `Timer` to that copy's `config.qml` that sets
+  `root.Window.window` to 1180×840 and `cfg_SinglePaths`/`cfg_SpanPaths`
+  to the folders to show, waits for the thumbnails, then grabs the
+  dialog's top item (walk `parent` up from `root` to the child of
+  `win.contentItem`; the `contentItem` itself can't be grabbed) and, with
+  the popup open, `sizesPopup.contentItem.parent`. Run the copy's
+  `utils/deploy.sh`, open the dialog with the `qdbus … evaluateScript`
+  line above, and when the files are written, run `utils/deploy.sh` from
+  the repo: the restart closes the dialog without applying.
 - **Release**: bump `Version` in `metadata.json`, commit, tag
   `v<version>`, and run `utils/package.sh` for the archive to upload. The
   KDE Store thumbnail (also the README's and the site's picture) is
   `docs/images/preview.png`, drawn by `utils/make-preview.py` (needs
-  Inkscape and ImageMagick).
+  Inkscape and ImageMagick); `settings.png` is the store's second
+  screenshot.
 
 ## Gotchas
 
