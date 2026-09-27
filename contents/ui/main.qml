@@ -1,5 +1,5 @@
 /*
-    Multi-Monitor Slideshow wallpaper plugin.
+    Multi-monitor Slideshow wallpaper plugin.
 
     Handles two kinds of wallpaper:
       - "Span" images (from SpanPaths, e.g. a dual-monitor panorama): shown

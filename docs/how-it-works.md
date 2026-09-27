@@ -1,6 +1,6 @@
 # How it works
 
-Multi-Monitor Slideshow is a Plasma wallpaper plugin: a folder of QML files that
+Multi-monitor Slideshow is a Plasma wallpaper plugin: a folder of QML files that
 Plasma loads, with no compiled code. This page explains how the pieces fit
 together. [cropping.md](cropping.md) covers the placement math in detail.
 

@@ -20,7 +20,7 @@ OUT = os.path.join(HERE, "..", "docs", "images", "preview.png")
 
 SIZE = 1024       # output size
 SS = 3            # supersampling factor
-NAME = "Multi-Monitor Slideshow"
+NAME = "Multi-monitor Slideshow"
 FONT = "Bricolage Grotesque"
 FONT_URL = ("https://github.com/google/fonts/raw/main/ofl/bricolagegrotesque/"
             "BricolageGrotesque%5Bopsz,wdth,wght%5D.ttf")

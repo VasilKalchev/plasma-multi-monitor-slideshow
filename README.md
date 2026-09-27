@@ -1,4 +1,4 @@
-# Multi-Monitor Slideshow
+# Multi-monitor Slideshow
 
 ![Two monitors showing one picture spanned across both, and the same two monitors showing a different picture each](docs/images/preview.png)
 
@@ -42,7 +42,7 @@ the same moment.
 ### From the KDE Store
 
 1. Right-click the desktop and choose **Desktop and Wallpaper…**
-2. Click **Get New Plugins…** and search for **Multi-Monitor Slideshow**.
+2. Click **Get New Plugins…** and search for **Multi-monitor Slideshow**.
 3. Click **Install**.
 
 ### From a release archive
@@ -68,14 +68,14 @@ git clone https://github.com/VasilKalchev/plasma-multi-monitor-slideshow.git \
 
 To update, run `git pull` in that folder.
 
-If **Multi-Monitor Slideshow** doesn't show up in the list of wallpaper types
+If **Multi-monitor Slideshow** doesn't show up in the list of wallpaper types
 afterwards, restart Plasma:
 `systemctl --user restart plasma-plasmashell.service`.
 
 ## Use
 
 1. Right-click the desktop and choose **Desktop and Wallpaper…**
-2. Set **Wallpaper type** to **Multi-Monitor Slideshow**.
+2. Set **Wallpaper type** to **Multi-monitor Slideshow**.
 3. Add folders:
    - **Individual folders** for ordinary wallpapers, one per monitor.
    - **Spanning folders** for wide pictures that go across all monitors.

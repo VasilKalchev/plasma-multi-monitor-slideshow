@@ -1,5 +1,5 @@
 /*
-    Settings UI for the Multi-Monitor Slideshow wallpaper plugin.
+    Settings UI for the Multi-monitor Slideshow wallpaper plugin.
 */
 import QtQuick
 import QtQuick.Controls as QQC2

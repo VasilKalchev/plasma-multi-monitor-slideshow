@@ -1,5 +1,5 @@
 /*
-    Shared state for every screen's Multi-Monitor Slideshow wallpaper instance.
+    Shared state for every screen's Multi-monitor Slideshow wallpaper instance.
 
     Plasma's wallpaper views for a single corona all run in one QML
     engine, so a QML singleton is visible to every screen at once. That
