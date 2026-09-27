@@ -91,7 +91,7 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 | **Context Menu…** | Which entries the desktop's right-click menu shows. |
 | **Same physical size on every monitor** | Scales spanned pictures per monitor, so they have the same real size on monitors with different pixel sizes, and lines continue straight across the bezel. |
 | **Monitor Sizes…** | The size of each monitor, as it reports it. Correct a monitor that reports a wrong size here. |
-| **Center on the bezel between the monitors** | Where a panorama is centered. See below. |
+| **Center panoramas on the bezel between the monitors** | Where a panorama, a spanned picture that isn't pre-split, is centered. Pre-split pictures always split on the bezel. See below. |
 
 The spanned-picture settings are grayed out when they make no difference,
 for example when your monitors are identical and lined up, and the reason
@@ -118,8 +118,8 @@ monitor.
 
 **Panoramas:** any other picture is scaled, keeping its shape, until it
 covers all monitors, and the overhang is cut evenly. It's centered on your
-monitors as a whole, which cuts off the least. With **Center on the bezel
-between the monitors**, its middle goes on the bezel between the two
+monitors as a whole, which cuts off the least. With **Center panoramas on
+the bezel between the monitors**, its middle goes on the bezel between the two
 middle monitors (on the middle monitor's center with an odd count) and on
 the middle of your largest monitor vertically. That keeps a two-part
 picture made for other monitors split on the bezel, such as two 16:10

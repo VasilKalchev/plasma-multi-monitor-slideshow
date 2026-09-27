@@ -92,8 +92,8 @@ the same layout and then draws only its own part:
    slices, each slice becomes one unit the size of the largest screen, laid
    side by side so the largest screen's slice sits exactly on it.
    Otherwise the picture is a panorama, scaled to cover a box: the
-   rectangle around all screens, or with **Center on the bezel between the
-   monitors**, a box centered on the middle join and on the middle of the
+   rectangle around all screens, or with **Center panoramas on the bezel
+   between the monitors**, a box centered on the middle join and on the middle of the
    largest screen, just large enough to reach every screen.
 3. **Back to the screen.** Each screen converts the box from desk units to
    its own pixels and draws the picture layer there. The parts outside the
@@ -131,8 +131,8 @@ thumbnails that haven't been read for 60 days are deleted.
 The page also lays out the desk (with `desk.js`, like the wallpaper) to
 find the spanned-picture settings that make no difference for the
 connected monitors: **Same physical size on every monitor** when all
-monitors have the same pixel size, **Center on the bezel between the
-monitors** when the middle join is already the middle of the monitors.
+monitors have the same pixel size, **Center panoramas on the bezel
+between the monitors** when the middle join is already the middle of the monitors.
 Those are grayed out, with the reason below them. **Monitor Sizes…** shows
 each monitor's reported size and saves a correction as
 `<make> <model>=<inches>` in `MonitorSizes`.
