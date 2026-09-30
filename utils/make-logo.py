@@ -30,6 +30,8 @@ ROWS = (60, 684)          # the pairs sit further apart than in the preview...
 TITLE_LINES = ("Multi-monitor", "Slideshow")
 TITLE_PX = 118            # ...to make room for a two-line, larger name
 TITLE_COLOR = "#1a2233"
+OUTLINE_COLOR = "#ffffff"  # keeps the name readable on dark pages
+OUTLINE_PX = 7
 
 # cairosvg has no blur filter: the two nebula clouds become radial gradients.
 SPACE = (mp.SPACE
@@ -79,8 +81,8 @@ def main():
         for left in (True, False):
             c = mp.corners(left, y0)
             x, y = [s * SS for s in ((c[2][0] + c[3][0]) / 2, (c[2][1] + c[3][1]) / 2)]
-            d.rectangle([x - 12 * SS, y - 2 * SS, x + 12 * SS, y + 20 * SS], fill="#c3cbd8")
-            d.ellipse([x - 64 * SS, y + 16 * SS, x + 64 * SS, y + 28 * SS], fill="#bcc5d3")
+            d.rectangle([x - 12 * SS, y - 2 * SS, x + 12 * SS, y + 20 * SS], fill=(0xc3, 0xcb, 0xd8, 70))
+            d.ellipse([x - 64 * SS, y + 16 * SS, x + 64 * SS, y + 28 * SS], fill=(0xbc, 0xc5, 0xd3, 55))
 
     screens = [(ROWS[0], True, mp.PANORAMA, 0),
                (ROWS[0], False, mp.PANORAMA, mp.SW + 2 * mp.SIDE + mp.GAP),
@@ -107,7 +109,8 @@ def main():
     line = TITLE_PX * 1.08 * SS
     for i, text in enumerate(TITLE_LINES):
         y = mid + (i - (len(TITLE_LINES) - 1) / 2) * line
-        d.text((big / 2, y), text, font=f, fill=TITLE_COLOR, anchor="mm")
+        d.text((big / 2, y), text, font=f, fill=TITLE_COLOR, anchor="mm",
+               stroke_width=OUTLINE_PX * SS, stroke_fill=OUTLINE_COLOR)
 
     canvas.resize((SIZE, SIZE), Image.LANCZOS).save(OUT, optimize=True)
     print(os.path.relpath(OUT))
