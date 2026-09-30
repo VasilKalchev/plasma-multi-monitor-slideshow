@@ -80,7 +80,7 @@ script refuses to replace a folder that is a git checkout.
   thumbnail (also the README's and the site's picture) is
   `docs/images/preview.png`, drawn by `utils/make-preview.py` (needs
   Inkscape and ImageMagick); `settings.png` is its second screenshot, and
-  its logo is `docs/images/icon.svg` rendered at 512 px. The website is
+  its logo is the preview with a larger name on a transparent background, drawn by `utils/make-logo.py` (needs cairosvg, pillow and numpy; `store/logo.png` in the notes folder). The website is
   GitHub Pages, served from `docs/` on `main`.
 
 ## Gotchas

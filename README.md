@@ -2,8 +2,10 @@
 
 ![Two monitors showing one image spanned across both, and the same two monitors showing a different image each](docs/images/preview.png)
 
-A wallpaper plugin for KDE Plasma 6 that runs one slideshow across all of
-your monitors, with two kinds of images:
+**Multi-monitor Slideshow** is a wallpaper slideshow for KDE Plasma 6 that
+mixes normal wallpapers with spanning ones. Windows can rotate both kinds in
+one slideshow; Plasma's built-in Slideshow can't. This plugin closes that
+gap, with two kinds of images:
 
 - **Spanned images** stretch across every monitor together, like the
   "Span" wallpaper mode on Windows. Use them for panoramas and for
