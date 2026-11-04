@@ -255,6 +255,7 @@ WallpaperItem {
     property var _scanResults: []     // per job index: array of { url, name, time }, or undefined
     property int _scanPending: 0
     property int _scanGeneration: 0
+    property string _scanConfig: ""   // _configSignature() of the scan in flight
 
     Instantiator {
         model: root._scanJobs
@@ -346,10 +347,20 @@ WallpaperItem {
     // this config been scanned at this tick, by anyone, and did that scan
     // live long enough to finish - which is why this is cheap to call from
     // every screen rather than tracking a locally-scanned signature.
+    //
+    // A scan this screen is still running for the same settings is left to
+    // finish rather than restarted: restarting it at every tick (or every
+    // retry, see SpanState._emptyRetry) would never let a slow folder
+    // finish.
     function rescan() {
-        if (!SpanState.claimScan(_configSignature() + "|" + SpanState.tickCount)) {
+        var config = _configSignature();
+        if (_scanPending > 0 && _scanConfig === config) {
             return;
         }
+        if (!SpanState.claimScan(config + "|" + SpanState.tickCount)) {
+            return;
+        }
+        _scanConfig = config;
         _scanGeneration = _scanGeneration + 1;
         var gen = _scanGeneration;
         var jobs = [];

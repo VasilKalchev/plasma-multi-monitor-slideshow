@@ -105,7 +105,12 @@ script refuses to replace a folder that is a git checkout.
 - **Scan claims** (`SpanState.claimScan()`): one screen scans per config
   and tick. A claim that hasn't finished within 30 s is taken over,
   because Plasma destroys and rebuilds wallpaper items when displays
-  change, and the claiming item can vanish mid-scan.
+  change, and the claiming item can vanish mid-scan. Taking over needs a
+  later call, and calls come with ticks; while the lists are empty the
+  slideshow Timer is stopped, so `SpanState._emptyRetry` ticks every 30 s
+  instead (this also notices a drive with the folders mounted after
+  login). A screen still scanning for the same settings doesn't restart
+  its scan on a tick, so a slow folder can finish.
 - **`property var` arrays** don't reliably notify on in-place mutation
   (`.push()`, `.shift()`, index assignment). Always assign a new array
   (`.slice()` and modify the copy).

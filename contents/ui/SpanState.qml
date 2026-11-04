@@ -305,4 +305,18 @@ QtObject {
         repeat: true
         onTriggered: root.advance()
     }
+
+    // The timer above stops while there are no images, and folders are
+    // only scanned on a tick, so with empty lists nothing would ever look
+    // again: not when a drive with the folders is mounted after login, nor
+    // when the claiming screen was destroyed before its first scan
+    // finished (see claimScan()). While a scan has been claimed and the
+    // lists are empty, tick every scanClaimGrace so the screens rescan.
+    property Timer _emptyRetry: Timer {
+        interval: root.scanClaimGrace
+        running: root.scanClaim !== ""
+                 && (root.spanImages.length + root.singleImages.length) === 0
+        repeat: true
+        onTriggered: root.advance()
+    }
 }
