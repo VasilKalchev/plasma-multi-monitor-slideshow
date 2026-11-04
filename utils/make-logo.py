@@ -12,7 +12,6 @@ import importlib.util
 import io
 import os
 import sys
-import tempfile
 import urllib.request
 
 import cairosvg
@@ -58,11 +57,13 @@ def coeffs(dst, src):
 
 
 def font():
+    # Without $BRICOLAGE_TTF the font is downloaded into memory, not to a
+    # fixed /tmp path that a broken download or another user could leave
+    # a bad file at.
     path = os.environ.get("BRICOLAGE_TTF")
     if not path:
-        path = os.path.join(tempfile.gettempdir(), "BricolageGrotesque.ttf")
-        if not os.path.exists(path):
-            urllib.request.urlretrieve(mp.FONT_URL, path)
+        with urllib.request.urlopen(mp.FONT_URL) as r:
+            path = io.BytesIO(r.read())
     f = ImageFont.truetype(path, TITLE_PX * SS)
     try:
         f.set_variation_by_axes([min(TITLE_PX, 96), 700, 100])   # opsz, wght, wdth
