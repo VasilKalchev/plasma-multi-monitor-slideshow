@@ -273,11 +273,16 @@ QtObject {
     // Like advance(), but keeps stepping through the existing shuffle
     // order until it lands on a span (ultrawide) image instead of
     // whatever's next - rather than picking an unrelated random span
-    // image out of sequence. Bounded by "total" so an empty spanImages
-    // list (nothing to land on) can't spin forever.
+    // image out of sequence. Bounded by two laps: in Random order the
+    // next lap is reshuffled, so the next span image can be up to
+    // 2 * total - 1 steps away (the rest of this lap, then all of the
+    // next one).
     function advanceToSpan() {
+        if (spanImages.length === 0) {
+            return;
+        }
         var total = spanImages.length + singleImages.length;
-        for (var i = 0; i < total; i++) {
+        for (var i = 0; i < 2 * total; i++) {
             advance();
             if (isSpanTurn) {
                 return;
@@ -288,8 +293,11 @@ QtObject {
     // Mirrors advanceToSpan(), landing on the next non-ultrawide
     // ("single") image instead.
     function advanceToSingle() {
+        if (singleImages.length === 0) {
+            return;
+        }
         var total = spanImages.length + singleImages.length;
-        for (var i = 0; i < total; i++) {
+        for (var i = 0; i < 2 * total; i++) {
             advance();
             if (!isSpanTurn) {
                 return;
