@@ -4,9 +4,9 @@
     Plasma's wallpaper views for a single corona all run in one QML
     engine, so a QML singleton is visible to every screen at once. That
     means we don't need clock-derived math or polling to keep screens in
-    sync: whichever screen's Timer fires first advances tickCount here,
-    and every screen instance reacts to that change immediately via
-    ordinary property bindings, with zero IPC.
+    sync: the one Timer here advances tickCount, and every screen
+    instance reacts to that change immediately via ordinary property
+    bindings, with zero IPC.
 */
 pragma Singleton
 import QtQuick
@@ -27,10 +27,9 @@ QtObject {
     property int slideInterval: 900
 
     // Advances by one every "slideInterval" seconds (see the Timer
-    // below). Screens showing an independent "single" image use this
-    // plus their own per-screen salt to pick their own image, so they
-    // all change at the same moment even though they show different
-    // pictures.
+    // below), and on Next. Every screen picks its picture from it, so
+    // they all change at the same moment: in Random order a screen
+    // showing a "single" image uses it plus its own per-screen salt.
     property int tickCount: 0
 
     property bool isSpanTurn: false

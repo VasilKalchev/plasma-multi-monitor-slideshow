@@ -7,17 +7,17 @@
         wallpaper mode, perfectly synced so all screens show the same
         picture at the same time.
       - "Single" images (from SinglePaths, ordinary wallpapers): shown one
-        per monitor, independently chosen per screen, exactly like the
-        built-in Slideshow plugin.
+        per monitor. In Random order each screen walks its own shuffle of
+        the list; in the sorted orders the screens, left to right, take
+        the next images in line.
 
     Cross-screen sync (for span images, and for keeping every screen's
     rotation in lockstep about *when* to change) is handled by the
     SpanState singleton (SpanState.qml): Plasma's wallpaper views for a
     single corona all run in one QML engine, so a QML singleton is a
-    true shared object, not a per-screen copy. Whichever screen's timer
-    fires first advances the shared state, and every screen reacts
-    immediately via ordinary property bindings - no clock math, no
-    polling, no IPC.
+    true shared object, not a per-screen copy. Its one Timer advances
+    the shared state, and every screen reacts immediately via ordinary
+    property bindings - no clock math, no polling, no IPC.
 */
 import QtQuick
 import QtQuick.Window
