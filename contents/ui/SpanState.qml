@@ -305,6 +305,15 @@ QtObject {
         }
     }
 
+    // After a Next from the menu the next automatic change waits a whole
+    // interval, as in the built-in Slideshow, instead of following the
+    // picture just chosen a moment later.
+    function restartTimer() {
+        if (_timer.running) {
+            _timer.restart();
+        }
+    }
+
     // QtObject has no default property to hold a bare child element, so
     // the Timer must be assigned to an explicit property instead.
     property Timer _timer: Timer {

@@ -218,7 +218,10 @@ WallpaperItem {
         text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Next")
         icon.name: "media-skip-forward"
         visible: cfg.ShowNextAction !== false
-        onTriggered: SpanState.advance()
+        onTriggered: {
+            SpanState.advance();
+            SpanState.restartTimer();
+        }
     }
 
     PlasmaCore.Action {
@@ -227,7 +230,10 @@ WallpaperItem {
         icon.name: "view-restore"
         enabled: SpanState.singleImages.length > 0
         visible: cfg.ShowNextIndividualAction === true
-        onTriggered: SpanState.advanceToSingle()
+        onTriggered: {
+            SpanState.advanceToSingle();
+            SpanState.restartTimer();
+        }
     }
 
     PlasmaCore.Action {
@@ -236,7 +242,10 @@ WallpaperItem {
         icon.name: "view-fullscreen"
         enabled: SpanState.spanImages.length > 0
         visible: cfg.ShowNextSpannedAction === true
-        onTriggered: SpanState.advanceToSpan()
+        onTriggered: {
+            SpanState.advanceToSpan();
+            SpanState.restartTimer();
+        }
     }
 
     // -- folder scanning: flat, one level deep --
