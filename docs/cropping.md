@@ -53,7 +53,9 @@ Where each monitor goes on the desk follows Display Configuration:
   centered). On the desk the range is 1440 − 1230 = 210, so the left
   monitor's top goes 57% × 210 = 120 desk pixels below the right one's
   top. Top-aligned stays top-aligned, centered stays centered,
-  bottom-aligned stays bottom-aligned.
+  bottom-aligned stays bottom-aligned. A monitor placed higher than
+  top-aligned or lower than bottom-aligned is aligned at that end, and the
+  rest of its offset is kept in pixels.
 
 The pixel sizes come from Qt's `pixelDensity`, which comes from the size
 the monitor reports (its EDID). If a monitor reports a wrong size, enter

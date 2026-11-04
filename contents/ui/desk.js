@@ -131,9 +131,14 @@ function layout(screens, matchPhysicalSize, sizes) {
         e.f = usePhys ? ref.density / e.density : 1;
         e.dw = e.w * e.f;
         e.dh = e.h * e.f;
+        // Vertically, the screen keeps its alignment against the reference
+        // as a fraction t of the range from top-aligned (0) to
+        // bottom-aligned (1). Any offset beyond that range is added as it
+        // is, like the gaps between screens below: stretching t past it
+        // blew up when the heights differed by a pixel or two.
         var dh = ref.h - e.h;
-        e.dy = Math.abs(dh) < 1 ? e.y
-             : ref.y + (e.y - ref.y) / dh * (ref.h - e.dh);
+        var t = Math.abs(dh) < 1 ? 0 : Math.min(1, Math.max(0, (e.y - ref.y) / dh));
+        e.dy = ref.y + t * (ref.h - e.dh) + (e.y - ref.y - t * dh);
     }
     if (ref !== null) {
         ref.dx = ref.x;
