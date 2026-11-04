@@ -262,6 +262,12 @@ WallpaperItem {
             required property var modelData
             required property int index
             property bool reported: false
+            // What was asked for. A folder that doesn't exist (an unplugged
+            // drive, an unmounted share) makes FolderListModel switch to
+            // the process's working directory - the home folder - when it
+            // is created, so `folder` no longer matches and its rows are
+            // ignored.
+            readonly property url wanted: modelData.folder
 
             folder: modelData.folder
             showDirs: false
@@ -278,7 +284,7 @@ WallpaperItem {
                 }
                 reported = true;
                 var files = [];
-                for (var i = 0; i < count; i++) {
+                for (var i = 0; String(folder) === String(wanted) && i < count; i++) {
                     var modified = get(i, "fileModified");
                     files.push({
                         url: get(i, "fileUrl").toString(),

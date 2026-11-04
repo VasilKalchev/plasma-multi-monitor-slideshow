@@ -96,8 +96,12 @@ script refuses to replace a folder that is a git checkout.
   `Instantiator` with the folder as its model) and never be reassigned. A
   new model starts scanning its default folder at once; reassigning
   `folder` before that finishes delivers a `Ready` carrying the old
-  folder's rows, and every later `Ready` is off by one. Empty, missing and
-  unreadable folders all reach `Ready` with 0 rows.
+  folder's rows, and every later `Ready` is off by one. Empty and
+  unreadable folders reach `Ready` with 0 rows, but a missing one (or a
+  URL that isn't a local file) makes the model switch to the process's
+  working directory when it is created: plasmashell's is the home
+  folder. So every model keeps the folder it was asked for (`wanted`),
+  and rows from a model whose `folder` differs from it are ignored.
 - **Scan claims** (`SpanState.claimScan()`): one screen scans per config
   and tick. A claim that hasn't finished within 30 s is taken over,
   because Plasma destroys and rebuilds wallpaper items when displays

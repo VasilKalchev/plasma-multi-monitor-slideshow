@@ -31,7 +31,10 @@ ColumnLayout {
     // Unticked folders are dimmed.
     property bool folderEnabled: true
 
-    readonly property var files: folderModels.object
+    // Null for a folder that doesn't exist: FolderListModel then lists the
+    // process's working directory (the home folder) instead.
+    readonly property var files: folderModels.object && String(folderModels.object.folder) === String(folderModels.object.wanted)
+                                 ? folderModels.object : null
 
     // The rows of `files` in the order the grid shows them: shuffled for
     // Random, else sorted like the slideshow (SpanState.compareImages()).
@@ -237,6 +240,7 @@ ColumnLayout {
         model: root.folder !== "" ? [root.folder] : []
         delegate: FolderListModel {
             required property string modelData
+            readonly property url wanted: modelData
             folder: modelData
             showDirs: false
             showFiles: true
