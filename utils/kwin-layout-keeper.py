@@ -112,12 +112,22 @@ def main():
     print("Switch your monitors/TV through their states now. Ctrl+C to stop.")
     try:
         while True:
-            args = differences(layout, current_outputs())
+            try:
+                args = differences(layout, current_outputs())
+            except (subprocess.CalledProcessError, ValueError, KeyError) as e:
+                # kscreen-doctor can fail or print a half-made state while
+                # KWin is reconfiguring, which is when the keeper is needed.
+                print(time.strftime("%H:%M:%S"), f"couldn't read the layout ({e}), retrying")
+                time.sleep(1.0)
+                continue
             if args:
                 print(time.strftime("%H:%M:%S"),
                       ("would apply: " if a.dry_run else "applying: ") + " ".join(args))
                 if not a.dry_run:
-                    subprocess.run(["kscreen-doctor", *args], capture_output=True)
+                    r = subprocess.run(["kscreen-doctor", *args], capture_output=True, text=True)
+                    if r.returncode != 0:
+                        print(time.strftime("%H:%M:%S"), "kscreen-doctor refused it:",
+                              r.stderr.strip() or f"exit status {r.returncode}")
             # After a change, give KWin a moment to settle before comparing again.
             time.sleep(1.0 if args else 0.2)
     except KeyboardInterrupt:
