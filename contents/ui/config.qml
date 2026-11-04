@@ -47,11 +47,13 @@ ColumnLayout {
 
     // Every edit is stamped, so the running wallpaper can tell these are the
     // newest settings and share them with every other screen (see
-    // SpanState.offerConfig()).
+    // SpanState.offerConfig()). A new stamp is always newer than the one
+    // loaded, even if the clock was ahead when that one was made (and has
+    // since been corrected); otherwise the older settings would win.
     property string cfg_ConfigStamp: ""
     property string cfg_ConfigStampDefault: ""
     function stamp() {
-        cfg_ConfigStamp = String(Date.now());
+        cfg_ConfigStamp = String(Math.max(Date.now(), (Number(cfg_ConfigStamp) || 0) + 1));
     }
     // The Defaults button sets every cfg_ to its default, the stamp to ""
     // as well. An empty stamp is older than any other screen's, so the
