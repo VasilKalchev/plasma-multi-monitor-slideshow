@@ -22,6 +22,7 @@ together. [cropping.md](cropping.md) covers the placement math in detail.
 | `utils/deploy.sh` | Installs the plugin from a clone into Plasma's wallpaper folder and restarts the shell. |
 | `utils/span-test-5120x1440.png`, `utils/make-span-test.sh` | A test image for checking spanned images on two 16:9 monitors, and the script that makes it. |
 | `utils/package.sh`, `utils/make-preview.py` | Build the release archive and the preview image. |
+| `utils/make-logo.py` | Draws the KDE Store logo. |
 
 ## One wallpaper per screen, one shared state
 
