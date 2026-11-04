@@ -53,6 +53,16 @@ ColumnLayout {
     function stamp() {
         cfg_ConfigStamp = String(Date.now());
     }
+    // The Defaults button sets every cfg_ to its default, the stamp to ""
+    // as well. An empty stamp is older than any other screen's, so the
+    // wallpaper would copy the old settings back over the defaults; stamp
+    // the reset like any other edit. (Loading never empties the stamp: it
+    // starts empty and only ever gets the saved value.)
+    onCfg_ConfigStampChanged: {
+        if (cfg_ConfigStamp === "") {
+            stamp();
+        }
+    }
 
     // Unticked folders stay listed but are left out of the slideshow.
     function setFolderEnabled(folder, enabled) {
