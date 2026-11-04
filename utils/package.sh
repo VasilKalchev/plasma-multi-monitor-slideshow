@@ -8,8 +8,10 @@
 set -eu
 cd "$(dirname "$0")/.."
 
-version=$(sed -n 's/^ *"Version": "\(.*\)",\{0,1\}$/\1/p' metadata.json)
-[ -n "$version" ] || { echo "no Version in metadata.json" >&2; exit 1; }
+# The version comes from the metadata.json that is packed, HEAD's, so a bump
+# that isn't committed yet can't name an archive of the old code.
+version=$(git show HEAD:metadata.json | sed -n 's/^ *"Version": "\(.*\)",\{0,1\}$/\1/p')
+[ -n "$version" ] || { echo "no Version in HEAD's metadata.json" >&2; exit 1; }
 if [ -n "$(git status --porcelain)" ]; then
     echo "warning: uncommitted changes are not included" >&2
 fi
