@@ -126,6 +126,8 @@ QtObject {
         return turns;
     }
 
+    // The image is set before isSpanTurn: a screen's picture follows both,
+    // and the other way round it would first load an empty spanned one.
     function pickCurrent() {
         var total = spanImages.length + singleImages.length;
         if (total === 0) {
@@ -140,8 +142,8 @@ QtObject {
             }
             var turn = _turns[tickCount % _turns.length];
             if (turn.span !== undefined) {
-                isSpanTurn = true;
                 currentSpanImage = turn.span;
+                isSpanTurn = true;
             } else {
                 singleStart = turn.single;
                 isSpanTurn = false;
@@ -181,8 +183,8 @@ QtObject {
 
         var idx = _shuffledIndices[pos];
         if (idx < spanImages.length) {
-            isSpanTurn = true;
             currentSpanImage = spanImages[idx];
+            isSpanTurn = true;
         } else {
             isSpanTurn = false;
             currentSpanImage = "";
