@@ -85,6 +85,9 @@ WallpaperItem {
         // First-ever load: straight onto the front layer, no fade -
         // there's nothing on screen yet to fade from.
         var layer = front.picture === "" ? front : back;
+        // Emptied first: the layer's old picture would otherwise start
+        // decoding again at the new picture's size.
+        layer.source = "";
         layer.span = isSpan;
         var known = _probeCache[_probeKey(src)];
         layer.probeSize = known !== undefined ? known : Qt.size(0, 0);
