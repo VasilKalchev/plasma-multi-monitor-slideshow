@@ -35,7 +35,11 @@ script refuses to replace a folder that is a git checkout.
   archive, build one with `utils/package.sh` and install it into a scratch
   root with `kpackagetool6 -t Plasma/Wallpaper -p <dir> -i <archive>`.
 - **Logs**: `console.info()`/`console.warn()` and QML errors from the
-  wallpaper reach `journalctl --user -u plasma-plasmashell.service`.
+  wallpaper reach `journalctl --user -u plasma-plasmashell.service`. The
+  plugin's own lines start with "Multi-monitor Slideshow:" (the image
+  counts, a folder that wasn't found, an image that can't be loaded, the
+  monitor layout); the ones every screen would repeat go through
+  `SpanState.log…()`, which writes them once, when they change.
   `console.log()` is debug level and filtered out; to see it, add a
   drop-in `~/.config/systemd/user/plasma-plasmashell.service.d/*.conf`
   with `[Service]` / `Environment=QT_LOGGING_RULES=qml.debug=true`, then

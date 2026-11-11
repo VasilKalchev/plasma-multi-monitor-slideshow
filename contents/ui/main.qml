@@ -104,6 +104,7 @@ WallpaperItem {
         }
         if (layer.status === Image.Error) {
             pending = null;
+            console.warn(SpanState.logPrefix + root.myScreenName + " can't load " + layer.source);
         } else if (layer.status === Image.Ready && layer.placed) {
             pending = null;
             front = layer;
@@ -118,7 +119,9 @@ WallpaperItem {
     }
 
     function layerMeasured(layer) {
-        if (layer.probeSize.width > 0) {
+        if (layer.probeSize.width < 0) {
+            console.warn(SpanState.logPrefix + "can't measure " + layer.source + ", placing it as a panorama");
+        } else {
             var cache = _probeCache;
             cache[_probeKey(String(layer.source))] = layer.probeSize;
             _probeCache = cache;
@@ -301,6 +304,7 @@ WallpaperItem {
                     return;
                 }
                 reported = true;
+                SpanState.logFolder(String(wanted), String(folder) !== String(wanted));
                 var files = [];
                 for (var i = 0; String(folder) === String(wanted) && i < count; i++) {
                     var modified = get(i, "fileModified");
@@ -341,6 +345,7 @@ WallpaperItem {
             }
         }
         SpanState.configure(_scanClaim, span, single, cfg.SlideInterval, cfg.SlideshowOrder || 0, keys);
+        SpanState.logCounts(_scanJobs.length);
         // Tear the models down (and their threads with them). Deferred: this
         // runs inside the last model's own status handler.
         var gen = _scanGeneration;
@@ -429,6 +434,7 @@ WallpaperItem {
     }
 
     function refreshGeometry() {
+        SpanState.logDesk(deskLayout());
         layerA.geom = computeGeomFor(layerA.span, layerA.probeSize);
         layerB.geom = computeGeomFor(layerB.span, layerB.probeSize);
     }
@@ -468,6 +474,7 @@ WallpaperItem {
         }
         cfg.ConfigStamp = String(SpanState.configStamp);
         cfg.writeConfig();
+        console.info(SpanState.logPrefix + root.myScreenName + " now uses the settings changed on another monitor");
     }
 
     Connections {
@@ -633,6 +640,7 @@ WallpaperItem {
 
     Component.onCompleted: {
         root.loading = !nothingToShow;
+        SpanState.logDesk(deskLayout());
         syncConfig();
         Qt.callLater(function () { root.rescan(); });
     }

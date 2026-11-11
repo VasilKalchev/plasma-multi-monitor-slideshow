@@ -171,6 +171,52 @@ QtObject {
         }
     }
 
+    // -- the journal --
+    // What a black or stuck desktop needs to be explained from
+    // `journalctl --user -u plasma-plasmashell.service`. Every screen runs
+    // the same code, so the lines that would repeat are kept here and
+    // written once, when what they say changes.
+    readonly property string logPrefix: "Multi-monitor Slideshow: "
+    property string _loggedCounts: ""
+    property string _loggedDesk: ""
+    property var _missingFolders: ({})
+
+    function logCounts(folders) {
+        var text = spanImages.length + " spanned and " + singleImages.length + " individual images in "
+                 + folders + (folders === 1 ? " folder" : " folders");
+        if (text !== _loggedCounts) {
+            _loggedCounts = text;
+            console.info(logPrefix + text);
+        }
+    }
+
+    // A folder that can't be listed (see the Instantiator in main.qml).
+    function logFolder(folder, missing) {
+        if (missing && _missingFolders[folder] !== true) {
+            _missingFolders[folder] = true;
+            console.warn(logPrefix + "folder not found, skipped: " + folder);
+        } else if (!missing && _missingFolders[folder] === true) {
+            _missingFolders[folder] = false;
+            console.info(logPrefix + "folder is back: " + folder);
+        }
+    }
+
+    // The desk the spanned images are laid out on (see desk.js).
+    function logDesk(desk) {
+        var parts = [];
+        for (var i = 0; i < desk.list.length; i++) {
+            var d = desk.list[i];
+            parts.push(d.names.join("=") + " " + d.w + "x" + d.h + " at " + d.x + "," + d.y
+                       + " -> on the desk at " + Math.round(d.dx) + "," + Math.round(d.dy)
+                       + ", scale " + d.f.toFixed(4) + (d === desk.ref ? ", reference" : ""));
+        }
+        var text = parts.join("; ") + (desk.usePhys ? "" : " (in pixels, not physical sizes)");
+        if (text !== _loggedDesk) {
+            _loggedDesk = text;
+            console.info(logPrefix + "monitors: " + text);
+        }
+    }
+
     // The newest settings seen from any screen, so every screen can run with
     // the same settings. Plasma stores wallpaper settings per screen, and
     // the settings dialog only edits the screen it was opened on. The
@@ -225,6 +271,9 @@ QtObject {
                 && (scanCompleted === signature
                     || Date.now() - scanClaimTime < scanClaimGrace)) {
             return false;
+        }
+        if (scanClaim === signature) {
+            console.info(logPrefix + "a folder scan didn't finish in " + scanClaimGrace / 1000 + " s, scanning again");
         }
         scanClaim = signature;
         scanClaimTime = Date.now();
