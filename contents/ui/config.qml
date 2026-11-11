@@ -76,8 +76,13 @@ ColumnLayout {
         stamp();
     }
 
-    // Saves an edited folder list, forgetting removed folders' ticks.
+    // Saves an edited folder list, forgetting removed folders' ticks. A
+    // folder is in one list only: in both, its images would play twice and
+    // the two entries would share one tick. Adding a folder the other list
+    // has just selects it there.
     function setPaths(isSpan, newPaths) {
+        const other = isSpan ? cfg_SinglePaths : cfg_SpanPaths;
+        newPaths = newPaths.filter(p => other.indexOf(p) === -1);
         if (isSpan) {
             cfg_SpanPaths = newPaths;
         } else {
