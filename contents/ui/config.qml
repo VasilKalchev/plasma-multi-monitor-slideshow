@@ -366,18 +366,22 @@ ColumnLayout {
                                     text: monitorRow.modelData.name
                                 }
 
-                                // In tenths of an inch.
+                                // In tenths of an inch. 0 is a monitor that
+                                // reports no size and has no correction: it
+                                // reads "unknown", not the smallest size.
+                                // Entering 0 drops a correction; anything
+                                // else is at least 5″.
                                 QQC2.SpinBox {
-                                    from: 50
+                                    from: 0
                                     to: 1500
                                     editable: true
                                     value: Math.round(monitorRow.modelData.inches * 10)
                                     textFromValue: (value, locale) => root.inchesText(value / 10)
-                                    valueFromText: (text, locale) => Math.round(parseFloat(text.replace(",", ".")) * 10)
+                                    valueFromText: (text, locale) => Math.round(parseFloat(text.replace(",", ".")) * 10) || 0
                                     validator: RegularExpressionValidator {
                                         regularExpression: /\d{0,3}([.,]\d?)?\s*[″"]?/
                                     }
-                                    onValueModified: root.setMonitorSize(monitorRow.modelData, value / 10)
+                                    onValueModified: root.setMonitorSize(monitorRow.modelData, value > 0 ? Math.max(50, value) / 10 : 0)
                                 }
 
                                 QQC2.ToolButton {
