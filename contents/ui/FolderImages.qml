@@ -126,12 +126,17 @@ ColumnLayout {
     // (ownCacheFailed: thumbnails are then shown but not saved).
     property bool ownCacheReady: false
     property bool ownCacheFailed: false
-    // File names in the own cache's current size directory, so a hit
-    // there skips the freedesktop lookup, whose every miss logs a warning.
+    // File names in the current size directory of the own cache and of
+    // the freedesktop cache. A thumbnail is only asked for when its file
+    // is listed: an Image given a file that doesn't exist logs a "Cannot
+    // open" warning, one per image without a thumbnail.
     property var ownIndex: ({})
     property string ownIndexDir: ""
+    property var sharedIndex: ({})
+    property string sharedIndexDir: ""
     readonly property bool thumbsReady: ownCacheFailed
-        || (ownCacheReady && ownIndexDir === ownThumbnails + "/" + ownSize)
+        || (ownCacheReady && ownIndexDir === ownThumbnails + "/" + ownSize
+            && (sharedSize === "" || sharedIndexDir === sharedThumbnails + "/" + sharedSize))
 
     function localPath(fileUrl) {
         var path = String(fileUrl).replace(/^file:\/\//, "");
@@ -208,6 +213,36 @@ ColumnLayout {
         }
     }
 
+    // The freedesktop cache's listing. Its directory may not exist: the
+    // model then lists the working directory instead (see "FolderListModel"
+    // in AGENTS.md), which counts as an empty cache.
+    Instantiator {
+        model: root.sharedSize !== "" ? [root.sharedThumbnails + "/" + root.sharedSize] : []
+        delegate: FolderListModel {
+            required property string modelData
+            readonly property url wanted: modelData
+            folder: modelData
+            showDirs: false
+            nameFilters: ["*.png"]
+
+            function report() {
+                if (status !== FolderListModel.Ready) {
+                    return;
+                }
+                var names = {};
+                if (String(folder) === String(wanted)) {
+                    for (var i = 0; i < count; i++) {
+                        names[get(i, "fileName")] = true;
+                    }
+                }
+                root.sharedIndex = names;
+                root.sharedIndexDir = modelData;
+            }
+            onStatusChanged: report()
+            Component.onCompleted: report()
+        }
+    }
+
     // Where an image's thumbnail comes from: this plugin's cache (keyed by
     // the URI and modification time, so an edited image gets a new
     // thumbnail) if it's there, else the freedesktop cache that Dolphin
@@ -225,7 +260,8 @@ ColumnLayout {
         var sources = [];
         if (root.ownIndex[name] === true && root.ownIndexDir === root.ownThumbnails + "/" + root.ownSize) {
             sources.push(own);
-        } else if (root.sharedSize !== "") {
+        } else if (root.sharedSize !== "" && root.sharedIndex[Qt.md5(uri) + ".png"] === true
+                   && root.sharedIndexDir === root.sharedThumbnails + "/" + root.sharedSize) {
             sources.push(root.sharedThumbnails + "/" + root.sharedSize + "/" + Qt.md5(uri) + ".png");
         }
         return { sources: sources, save: root.localPath(own), name: name, size: root.ownSize };

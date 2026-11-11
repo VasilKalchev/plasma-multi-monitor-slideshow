@@ -162,6 +162,8 @@ script refuses to replace a folder that is a git checkout.
   QML can't write freedesktop thumbnails (they need PNG metadata) or make
   directories, so the plugin keeps its own cache and runs `mkdir -p` (and
   the 60-day prune) through the plasma5support "executable" engine. An
+  `Image` given a file that doesn't exist logs "Cannot open", so both
+  caches are listed first and only listed thumbnails are asked for. An
   `Image` showing a `grabToImage()` result must not get a `sourceSize`.
 - **Physical sizes can't be checked in screenshots**, which count pixels.
   Use `utils/span-test-5120x1440.png` (two 16:9 halves with lines and
