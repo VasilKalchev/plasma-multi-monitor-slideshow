@@ -227,7 +227,17 @@ ColumnLayout {
         } else if (root.sharedSize !== "") {
             sources.push(root.sharedThumbnails + "/" + root.sharedSize + "/" + Qt.md5(uri) + ".png");
         }
-        return { sources: sources, save: root.localPath(own), size: root.ownSize };
+        return { sources: sources, save: root.localPath(own), name: name, size: root.ownSize };
+    }
+
+    // A thumbnail saved just now is in the cache too: the listing above was
+    // made when the page opened, and a cell built again (after scrolling
+    // away, or a change of order) would decode the image once more. Nothing
+    // is bound to ownIndex, so it is added to in place.
+    function ownThumbnailSaved(size, name) {
+        if (root.ownIndexDir === root.ownThumbnails + "/" + size) {
+            root.ownIndex[name] = true;
+        }
     }
 
     spacing: 0
@@ -340,6 +350,7 @@ ColumnLayout {
                     property int thumbState: 0
                     property var sources: []
                     property string savePath: ""
+                    property string saveName: ""
                     property int makeSize: 0
                     property bool made: false
                     // Showing a grabToImage() result, which takes no sourceSize.
@@ -350,6 +361,7 @@ ColumnLayout {
                         var plan = root.thumbnailPlan(fileUrl, fileModified);
                         sources = plan.sources;
                         savePath = plan.save;
+                        saveName = plan.name;
                         makeSize = plan.size;
                         next();
                     }
@@ -373,8 +385,8 @@ ColumnLayout {
                     // If the grab can't run, shows the image directly.
                     function grabMade() {
                         var ok = maker.grabToImage(function (result) {
-                            if (root.ownCacheReady) {
-                                result.saveToFile(cell.savePath);
+                            if (root.ownCacheReady && result.saveToFile(cell.savePath)) {
+                                root.ownThumbnailSaved(cell.makeSize, cell.saveName);
                             }
                             maker.source = "";
                             cell.grabbed = true;
