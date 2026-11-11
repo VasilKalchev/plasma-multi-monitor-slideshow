@@ -64,7 +64,9 @@ script refuses to replace a folder that is a git checkout.
   `context-menu.png` and `monitor-sizes.png`, the same dialog with a
   popup open) are `grabToImage()` captures made from inside the page, so
   no other window can end up in them. A popup is not part of the dialog's
-  grab: grab it on its own and paste it on at its position in the window
+  grab: grab it on its own (`popup.contentItem.parent`, for a ComboBox
+  `combo.popup.contentItem.parent`) and paste it on at its position in
+  the window, which is that item's `mapToItem(topItem, 0, 0)`
   (`magick dialog.png popup.png -geometry +X+Y -composite out.png`).
   Copy the plugin files (with `utils/`) to a scratch folder, add a temporary `Timer` to that copy's `config.qml` that sets
   `root.Window.window` to 1180×840 and `cfg_SinglePaths`/`cfg_SpanPaths`
