@@ -12,7 +12,7 @@
         "Id": "com.github.vasilkalchev.multimonitorslideshow",
         "License": "MIT",
         "Name": "Multi-monitor Slideshow",
-        "Version": "1.0.0",
+        "Version": "1.1.0",
         "Website": "https://github.com/VasilKalchev/plasma-multi-monitor-slideshow"
     },
     "X-KDE-ParentApp": "org.kde.plasmashell",

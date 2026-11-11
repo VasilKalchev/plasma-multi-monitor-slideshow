@@ -81,7 +81,8 @@ script refuses to replace a folder that is a git checkout.
   evaluateScript` line above, and when the files are written, run
   `utils/deploy.sh` from the repo: the restart closes the dialog without
   applying.
-- **Release**: bump `Version` in `metadata.json`, commit, tag
+- **Release**: add the version to `CHANGELOG.md`, bump `Version` in
+  `metadata.json`, commit, tag
   `v<version>`, push the tag, and run `utils/package.sh` for the archive.
   Attach it to a GitHub release (`gh release create v<version>
   <archive>`) and upload it on the KDE Store product's Files tab, with a

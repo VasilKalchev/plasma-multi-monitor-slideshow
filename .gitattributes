@@ -3,5 +3,6 @@
 /.gitattributes export-ignore
 /.gitignore export-ignore
 /AGENTS.md export-ignore
+/CHANGELOG.md export-ignore
 /docs export-ignore
 /utils export-ignore

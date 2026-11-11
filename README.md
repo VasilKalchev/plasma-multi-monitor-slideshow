@@ -30,6 +30,9 @@ the same moment.
   as all of your monitors together (such as 32:9 on two 16:9 monitors) is
   detected, and each monitor shows its own part, with the join on the
   bezel. Anything else is shown as one panorama.
+- **Individual images fill the monitor your way:** scaled and cropped,
+  scaled, scaled keeping proportions, centered or tiled, with a blurred
+  copy of the image or a color where the image leaves the monitor free.
 - **Slideshow order:** random, by name (A to Z, Z to A) or by date
   modified (newest or oldest first).
 - **A settings page like the built-in Slideshow's:** folder lists with
@@ -262,6 +265,7 @@ Thumbnails the plugin made are in
 - [How it works](docs/how-it-works.md): how the plugin is built.
 - [How cropping works](docs/cropping.md): the placement math, with a
   worked example.
+- [Changelog](CHANGELOG.md): what changed in each version.
 - [AGENTS.md](AGENTS.md): notes for working on the code.
 
 ## License
