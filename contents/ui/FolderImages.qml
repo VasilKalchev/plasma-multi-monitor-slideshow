@@ -19,6 +19,7 @@ import QtCore
 import Qt.labs.folderlistmodel
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as P5Support
+import "desk.js" as Desk
 
 ColumnLayout {
     id: root
@@ -91,11 +92,12 @@ ColumnLayout {
         if (!root.isSpan) {
             return Screen.height > 0 ? Screen.width / Screen.height : 16 / 9;
         }
-        var screens = Qt.application.screens;
+        // Mirrored screens are one place in the row (see desk.js).
+        var row = Desk.layout(Qt.application.screens, false, {}).list;
         var w = 0, h = 0;
-        for (var i = 0; i < screens.length; i++) {
-            w += screens[i].width;
-            h = Math.max(h, screens[i].height);
+        for (var i = 0; i < row.length; i++) {
+            w += row[i].w;
+            h = Math.max(h, row[i].h);
         }
         return h > 0 ? w / h : 32 / 9;
     }
