@@ -91,7 +91,11 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 
 ### Settings
 
-![The Desktop Folder Settings dialog with Multi-monitor Slideshow as the wallpaper type: Change every, Order and Context Menu, the spanned-image options, the individual and spanning folders on the left, and thumbnails of the selected folder on the right](docs/images/settings.png)
+![The Desktop Folder Settings dialog with Multi-monitor Slideshow as the wallpaper type: Change every, Order and Context Menu, the spanned-image options, the individual and spanning folders on the left, and thumbnails of the selected individual folder on the right](docs/images/settings.png)
+
+Click a folder to see its images. A spanning folder shows wide previews:
+
+![The same dialog with the spanning folder selected: its wide images are shown three to a row](docs/images/settings-spanning.png)
 
 | Setting | What it does |
 |---|---|
@@ -101,6 +105,12 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 | **Same physical size on every monitor** | Scales spanned images per monitor, so they have the same real size on monitors with different pixel sizes, and lines continue straight across the bezel. |
 | **Monitor Sizes…** | The size of each monitor, as it reports it. Correct a monitor that reports a wrong size here. |
 | **Always center on the bezel between the monitors** | Off by default. Full-width images are always centered on the bezel; with this on, panoramas are too, instead of on your monitors as a whole. See below. |
+
+**Order** and **Context Menu…** open these lists:
+
+![The Order list open over the dialog: Random, A to Z, Z to A, Newest first, Oldest first](docs/images/order.png)
+
+![The Context Menu list open over the dialog: tickboxes for the "Wallpaper" separator label, Open Image, Next, Next Individual and Next Spanned](docs/images/context-menu.png)
 
 The spanned-image settings are grayed out when they make no difference,
 for example when your monitors are identical and lined up, and the reason
@@ -212,7 +222,7 @@ especially). Click **Monitor Sizes…** in the settings and enter the
 monitor's real diagonal. An arrow appears next to a corrected size to go
 back to the reported one.
 
-![The Monitor Sizes popup: each monitor by make, model and connector, with its diagonal in inches](docs/images/monitor-sizes.png)
+![The Monitor Sizes popup open over the dialog: each monitor by make, model and connector, with its diagonal in inches](docs/images/monitor-sizes.png)
 
 **Checking the alignment.** Put
 [`utils/span-test-5120x1440.png`](utils/span-test-5120x1440.png) in a

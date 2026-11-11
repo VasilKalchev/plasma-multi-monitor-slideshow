@@ -58,11 +58,15 @@ script refuses to replace a folder that is a git checkout.
 - `main.qml` can't run under the `qml` tool (it needs `WallpaperItem` and
   Plasma's imports), so verifying means deploying and restarting the
   shell.
-- **Screenshots of the settings** (`docs/images/settings.png`, the
-  Desktop Folder Settings dialog, and `monitor-sizes.png`) are
-  `grabToImage()` captures made from inside the page, so no other window
-  can end up in them. Copy the plugin files (with `utils/`) to a scratch
-  folder, add a temporary `Timer` to that copy's `config.qml` that sets
+- **Screenshots of the settings** (in `docs/images/`: `settings.png`
+  and `settings-spanning.png`, the Desktop Folder Settings dialog with an
+  individual and a spanning folder selected, and `order.png`,
+  `context-menu.png` and `monitor-sizes.png`, the same dialog with a
+  popup open) are `grabToImage()` captures made from inside the page, so
+  no other window can end up in them. A popup is not part of the dialog's
+  grab: grab it on its own and paste it on at its position in the window
+  (`magick dialog.png popup.png -geometry +X+Y -composite out.png`).
+  Copy the plugin files (with `utils/`) to a scratch folder, add a temporary `Timer` to that copy's `config.qml` that sets
   `root.Window.window` to 1180×840 and `cfg_SinglePaths`/`cfg_SpanPaths`
   to the folders to show, waits for the thumbnails, then grabs the
   dialog's top item (walk `parent` up from `root` to the child of
@@ -83,7 +87,7 @@ script refuses to replace a folder that is a git checkout.
   Plasma 6 Wallpaper Plugins**, the category Get New Plugins… reads. Its
   thumbnail (also the README's and the site's picture) is
   `docs/images/preview.png`, drawn by `utils/make-preview.py` (needs
-  Inkscape and ImageMagick); `settings.png` is its second screenshot, and
+  Inkscape and ImageMagick); the settings screenshots are its other gallery pictures, and
   its logo is the preview with a larger name on a transparent background, drawn by `utils/make-logo.py` (needs cairosvg, pillow and numpy; `store/logo.png` in the notes folder). The website is
   GitHub Pages, served from `docs/` on `main`.
 
