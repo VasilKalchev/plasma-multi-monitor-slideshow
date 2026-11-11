@@ -166,14 +166,19 @@ ColumnLayout {
     // Makes the cache directories and prunes the cache: a thumbnail not
     // read for 60 days (its image deleted, edited, or just not looked at)
     // is removed. Reading a file updates its access time at most daily
-    // (relatime), which is plenty for this.
+    // (relatime), which is plenty for this. On a file system mounted
+    // noatime it never does, and thumbnails still in use would be deleted
+    // 60 days after they were made, so there they go a year after they
+    // were made instead.
     Component.onCompleted: {
         var dirs = root.ownSizes.map(function (size) {
             return root.shellQuote(root.localPath(root.ownThumbnails + "/" + size));
         });
+        var cache = root.shellQuote(root.localPath(root.ownThumbnails));
         shell.connectSource("mkdir -p " + dirs.join(" ")
-            + " && { find " + root.shellQuote(root.localPath(root.ownThumbnails))
-            + " -type f -name '*.jpg' -atime +60 -delete; true; }");
+            + " && { if findmnt -no OPTIONS -T " + cache + " 2>/dev/null | grep -qw noatime;"
+            + " then age='-mtime +365'; else age='-atime +60'; fi;"
+            + " find " + cache + " -type f -name '*.jpg' $age -delete; true; }");
     }
 
     // Without the executable engine nothing would ever answer.
