@@ -130,7 +130,10 @@ WallpaperItem {
             console.warn(SpanState.logPrefix + "can't measure " + layer.picture + ", placing it as a panorama");
         } else {
             var cache = _probeCache;
-            cache[_probeKey(layer.picture)] = layer.probeSize;
+            // A copy: layer.probeSize itself is a reference to the layer's
+            // property, and would read (0, 0) once the layer moves on to
+            // its next picture.
+            cache[_probeKey(layer.picture)] = Qt.size(layer.probeSize.width, layer.probeSize.height);
             _probeCache = cache;
         }
         // The geometry first, then the picture, so it is decoded once.
