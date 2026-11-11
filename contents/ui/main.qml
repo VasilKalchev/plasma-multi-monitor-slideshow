@@ -211,9 +211,18 @@ WallpaperItem {
         var turn = SpanState.singleTurn;
         var sLap = Math.floor(turn / count);
         var sPos = turn % count;
-        function shuffleFor(name) {
-            var seed = (SpanState.baseSeed + 500000 + Math.imul(sLap, 0x9e3779b1)) ^ screenSalt(name);
+        function shuffled(name, lap) {
+            var seed = (SpanState.baseSeed + 500000 + Math.imul(lap, 0x9e3779b1)) ^ screenSalt(name);
             return SpanState.shuffledOrder(images, seed);
+        }
+        // A new shuffle doesn't start with the image the last one ended on.
+        function shuffleFor(name) {
+            var list = shuffled(name, sLap);
+            if (sLap > 0 && count > 1 && list[0] === shuffled(name, sLap - 1)[count - 1]) {
+                list[0] = list[1];
+                list[1] = shuffled(name, sLap - 1)[count - 1];
+            }
+            return list;
         }
         var screens = Qt.application.screens;
         var names = [];
