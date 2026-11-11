@@ -158,9 +158,8 @@ WallpaperItem {
     // and two screens that briefly shared a position showed the same one.
     // The final mixing step matters: names like DP-1 and DP-2 differ only
     // in the last character, so a plain string hash gives neighbouring
-    // numbers. Falls back to the position only if the name is unknown.
-    function screenSalt() {
-        var name = root.myScreenName || ("pos:" + Math.floor(myVX) + "," + Math.floor(myVY));
+    // numbers.
+    function screenSalt(name) {
         var h = 5381;
         for (var i = 0; i < name.length; i++) {
             h = (Math.imul(h, 33) + name.charCodeAt(i)) | 0;
@@ -176,7 +175,18 @@ WallpaperItem {
     // Each screen walks its own shuffle of the list (seeded with its salt),
     // not the same shuffle at an offset: with a shared order, screens
     // whose offsets are close show each other's pictures a few changes
-    // apart.
+    // apart. The walk advances once per single-image turn
+    // (SpanState.singleTurn) and is reshuffled when it has been through
+    // the list.
+    //
+    // Independent shuffles land on the same image now and then (once in
+    // images.length turns for two screens). The screens are taken in the
+    // order of their connector names, and one whose image an earlier
+    // screen already shows takes another from its own shuffle, half the
+    // list further on (not the next one, which it would then show twice
+    // in a row). Every screen works this out for itself and gets the same
+    // answer. A screen falls back to its position only if its name is
+    // unknown, and then isn't checked against the others.
     //
     // With a sorted order the screens instead share one walk through the
     // list: each turn every screen, left to right, takes the next image
@@ -189,12 +199,39 @@ WallpaperItem {
         if (SpanState.order !== 0) {
             return images[(SpanState.singleStart + myScreenIndex()) % images.length];
         }
-        var tick = SpanState.tickCount;
-        var sLap = Math.floor(tick / images.length);
-        var sPos = tick % images.length;
-        var seed = (SpanState.baseSeed + 500000 + Math.imul(sLap, 0x9e3779b1)) ^ screenSalt();
-        var sOrder = SpanState.shuffledOrder(images, seed);
-        return sOrder[sPos];
+        var count = images.length;
+        var turn = SpanState.singleTurn;
+        var sLap = Math.floor(turn / count);
+        var sPos = turn % count;
+        function shuffleFor(name) {
+            var seed = (SpanState.baseSeed + 500000 + Math.imul(sLap, 0x9e3779b1)) ^ screenSalt(name);
+            return SpanState.shuffledOrder(images, seed);
+        }
+        var screens = Qt.application.screens;
+        var names = [];
+        for (var i = 0; i < screens.length; i++) {
+            if (screens[i].name !== "" && names.indexOf(screens[i].name) === -1) {
+                names.push(screens[i].name);
+            }
+        }
+        names.sort();
+        if (names.indexOf(root.myScreenName) === -1) {
+            var own = root.myScreenName || ("pos:" + Math.floor(myVX) + "," + Math.floor(myVY));
+            return shuffleFor(own)[sPos];
+        }
+        var taken = {};
+        for (var n = 0; n < names.length; n++) {
+            var sOrder = shuffleFor(names[n]);
+            var pick = sOrder[sPos];
+            for (var step = 0; taken[pick] === true && step < count; step++) {
+                pick = sOrder[(sPos + (count >> 1) + step) % count];
+            }
+            if (names[n] === root.myScreenName) {
+                return pick;
+            }
+            taken[pick] = true;
+        }
+        return "";
     }
 
     // -- contextual (right-click) actions, mirroring the built-in Slideshow plugin --

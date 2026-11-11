@@ -50,8 +50,12 @@ generator. The seed changes at every Plasma start, and each lap is
 reshuffled. When the lap lands on an individual image, every screen shows an
 individual image, but each screen picks it from its own shuffle of the
 individual list, seeded from the screen's connector name (`DP-1`, `HDMI-A-1`, ...).
-So the screens show different images, and each screen keeps its own
-sequence when monitors are added, removed or moved.
+Each screen keeps its own sequence when monitors are added, removed or
+moved, and goes one image further on every individual turn, through the
+whole list before it is reshuffled. Two shuffles land on the same image
+now and then; the screen whose connector name sorts later then takes
+another image from its own shuffle, so the screens show different images
+(while there are enough of them).
 
 **Sorted** (A to Z, Z to A, newest first, oldest first): both lists are
 sorted and merged into one lap of turns. A spanned image is one turn. An

@@ -29,8 +29,7 @@ QtObject {
 
     // Advances by one every "slideInterval" seconds (see the Timer
     // below), and on Next. Every screen picks its picture from it, so
-    // they all change at the same moment: in Random order a screen
-    // showing a "single" image uses it plus its own per-screen salt.
+    // they all change at the same moment.
     property int tickCount: 0
 
     property bool isSpanTurn: false
@@ -44,8 +43,16 @@ QtObject {
     // next image in line and one turn uses up one image per screen.
     property int singleStart: 0
 
+    // Random order only: how many single-image turns there have been
+    // before this one, counted from tick 0. Each screen's walk through its
+    // own shuffle of the single images goes by this, not by tickCount, so
+    // the spanned turns in between don't make it skip images.
+    property int singleTurn: 0
+
     property var _shuffledIndices: []
     property int _shuffledLap: -1
+    // _singlesBefore[pos]: the single-image turns in this lap before pos.
+    property var _singlesBefore: []
 
     // Sorted orders only: one lap of turns, each { span: url } or
     // { single: index into singleImages }, built for _turnsScreens screens.
@@ -157,9 +164,20 @@ QtObject {
                     shuffled[1] = t;
                 }
             }
+            var before = [];
+            var singles = 0;
+            for (var s = 0; s < shuffled.length; s++) {
+                before.push(singles);
+                if (shuffled[s] >= spanImages.length) {
+                    singles++;
+                }
+            }
             _shuffledIndices = shuffled;
+            _singlesBefore = before;
             _shuffledLap = lap;
         }
+        // Every lap has one turn per single image.
+        singleTurn = lap * singleImages.length + _singlesBefore[pos];
 
         var idx = _shuffledIndices[pos];
         if (idx < spanImages.length) {
@@ -298,8 +316,10 @@ QtObject {
         if (_claimSettings(claim) !== _claimSettings(scanClaim)) {
             return;
         }
-        // A shuffle is a permutation of the old total; reshuffle for the new one.
-        if (spanList.length + singleList.length !== _shuffledIndices.length) {
+        // A shuffle is a permutation of the old total, and which of its
+        // slots are spanned turns goes by the old split; reshuffle for new ones.
+        if (spanList.length + singleList.length !== _shuffledIndices.length
+                || spanList.length !== spanImages.length) {
             _shuffledIndices = [];
             _shuffledLap = -1;
         }
