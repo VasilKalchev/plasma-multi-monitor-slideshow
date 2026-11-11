@@ -644,38 +644,30 @@ WallpaperItem {
             };
         }
 
-        if (probeSize.width > 0 && probeSize.height > 0) {
-            // A full-width image is as wide as all N screens together
-            // (the "dual monitor wallpaper" packs), rather than a panorama
-            // of some other shape: a 1/N-wide slice of it has this
-            // screen's own aspect ratio. Each slice then goes to one
-            // screen.
-            var unitW = probeSize.width / n;
-            var unitAspect = unitW / probeSize.height;
-            var myAspect = me.w / me.h;
-            if (Math.abs(unitAspect - myAspect) / myAspect < 0.03) {
-                // Each slice is one reference-screen-sized unit on the desk,
-                // laid out so the reference screen's own slice sits exactly
-                // on it. Every other screen shows whatever part of its slice
-                // it physically covers: a smaller screen next to the
-                // reference loses its slice's outer edge, never the edge at
-                // the seam, and its vertical crop follows its real alignment.
-                //
-                // Stretch, not PreserveAspectCrop: the slice's aspect only
-                // matches the screen's within 3%, and PreserveAspectCrop
-                // would absorb that gap with its own crop centered on this
-                // layer's box - not on this screen's window into it - so the
-                // seam would drift off the bezel toward the top and bottom
-                // of any non-reference screen. Stretch maps source pixels to
-                // exactly this box, so all screens agree on every pixel, at
-                // the cost of an imperceptible sub-3% non-uniform stretch.
-                return toLocal({
-                    x: ref.dx - desk.refIndex * ref.dw,
-                    y: ref.dy,
-                    w: ref.dw * n,
-                    h: ref.dh
-                }, true);
-            }
+        // A full-width image (see Desk.isFullWidth()): each slice goes to
+        // one screen.
+        if (Desk.isFullWidth(desk, probeSize.width, probeSize.height)) {
+            // Each slice is one reference-screen-sized unit on the desk,
+            // laid out so the reference screen's own slice sits exactly
+            // on it. Every other screen shows whatever part of its slice
+            // it physically covers: a smaller screen next to the
+            // reference loses its slice's outer edge, never the edge at
+            // the seam, and its vertical crop follows its real alignment.
+            //
+            // Stretch, not PreserveAspectCrop: the slice's aspect only
+            // matches the screen's within 3%, and PreserveAspectCrop
+            // would absorb that gap with its own crop centered on this
+            // layer's box - not on this screen's window into it - so the
+            // seam would drift off the bezel toward the top and bottom
+            // of any non-reference screen. Stretch maps source pixels to
+            // exactly this box, so all screens agree on every pixel, at
+            // the cost of an imperceptible sub-3% non-uniform stretch.
+            return toLocal({
+                x: ref.dx - desk.refIndex * ref.dw,
+                y: ref.dy,
+                w: ref.dw * n,
+                h: ref.dh
+            }, true);
         }
         // A continuous panorama: cover-fit (PreserveAspectCrop) onto a box
         // on the desk, then crop out this screen. By default the box around

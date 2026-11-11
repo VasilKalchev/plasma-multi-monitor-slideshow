@@ -162,6 +162,28 @@ function layout(screens, matchPhysicalSize, sizes) {
              box: { x: minX, y: minY, w: maxX - minX, h: maxY - minY } };
 }
 
+// Whether an image is full-width: as wide as all the screens together
+// (the "dual monitor wallpaper" packs), rather than a panorama of some
+// other shape. Cut into one equal slice per screen, a slice has the shape
+// of every screen, within 3%. Every screen, not just the asking one:
+// tested against its own shape alone, screens of different shapes (a 16:9
+// next to a 21:9) disagreed, one cutting the image into slices and the
+// other placing it as a panorama, and the two didn't meet at the join.
+function isFullWidth(desk, imageW, imageH) {
+    var n = desk.list.length;
+    if (n === 0 || !(imageW > 0) || !(imageH > 0)) {
+        return false;
+    }
+    var unitAspect = (imageW / n) / imageH;
+    for (var i = 0; i < n; i++) {
+        var aspect = desk.list[i].w / desk.list[i].h;
+        if (!(Math.abs(unitAspect - aspect) / aspect < 0.03)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Horizontal middle of the screen row on the desk, counted in screens,
 // not pixels: with an even count, the bezel between the two middle
 // screens; with an odd count, the center of the middle screen.

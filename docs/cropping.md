@@ -72,7 +72,7 @@ layout.
 
 The image is cut into as many equal slices as there are monitors
 (mirrored monitors count once). If a
-slice has the monitor's shape (within 3%), the image is full-width, as
+slice has the shape of every monitor (within 3%), the image is full-width, as
 wide as the monitors together: each
 slice is one unit the size of the largest monitor on the desk, placed so
 the largest monitor's own slice sits exactly on it. A monitor next to the
@@ -93,10 +93,10 @@ its middle seam lands on the bezel:
   covers desk x −266 to 1920, so it loses the left 374 px of that half
   (15%), and 120 px at the top and 90 px at the bottom.
 
-Each monitor runs the full-width test against its own shape. If the
-monitors have different shapes (say a 16:9 and a 16:10), an image can be
-full-width for one and a panorama for the other, and the halves won't line
-up at the join.
+The slice has to match every monitor, so all monitors agree on what the
+image is. If the monitors have different shapes (say a 16:9 and a 16:10,
+or a landscape and a portrait one), no image matches them all, and every
+spanned image is a panorama.
 
 An image is only full-width for the monitor count it was made for. A
 two-part image is too narrow for three monitors: its three slices don't

@@ -175,13 +175,17 @@
     const hw = Math.max(cx - b.x, b.x + b.w - cx), hh = Math.max(cy - b.y, b.y + b.h - cy);
     return { x: cx - hw, y: cy - hh, w: 2 * hw, h: 2 * hh };
   }
+  // Full-width: a 1/n slice has the shape of every monitor, within 3%.
+  function isFullWidth(desk, iw, ih) {
+    const u = (iw / desk.list.length) / ih;
+    return desk.list.every(m => Math.abs(u - m.w / m.h) / (m.w / m.h) < 0.03);
+  }
   // Where the image sits on the desk for one monitor: the kind of
   // placement, its box, and desk = origin + source * k.
   function place(desk, me, iw, ih) {
     const n = desk.list.length;
     let kind, box, stretch = false;
-    const unitAspect = (iw / n) / ih, myAspect = me.w / me.h;
-    if (Math.abs(unitAspect - myAspect) / myAspect < 0.03) {
+    if (isFullWidth(desk, iw, ih)) {
       kind = "split"; stretch = true;
       box = { x: desk.ref.dx - desk.refIndex * desk.ref.dw, y: desk.ref.dy, w: desk.ref.dw * n, h: desk.ref.dh };
     } else if (state.join) { kind = "join"; box = joinBox(desk); }
@@ -206,8 +210,7 @@
   function analyse(iw, ih) {
     const desk = deskLayout(screens());
     const per = desk.list.map(me => { const p = place(desk, me, iw, ih); return { me, p, reg: region(me, p, iw, ih) }; });
-    const kinds = [...new Set(per.map(q => q.p.kind))];
-    return { desk, per, kind: kinds.length === 1 ? kinds[0] : "mixed" };
+    return { desk, per, kind: per[0].p.kind };
   }
 
   // ---- drawing ----
@@ -330,7 +333,7 @@
     };
     if (A.kind === "join") {
       const b = A.per[0].p.box;
-      out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't a monitor shape. So it's a panorama. ` : ""}Centered on the ${n % 2 === 0 ? "middle join" : "middle monitor"} and on the middle of ${refName}, it has to cover a <span class="num">${R(b.w)}×${R(b.h)}</span> box (<span class="num">${ar(b.w / b.h)}</span>, in ${ref.name}'s pixels) to reach every monitor. ${cut(b)}</p>`);
+      out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't the shape of all your monitors. So it's a panorama. ` : ""}Centered on the ${n % 2 === 0 ? "middle join" : "middle monitor"} and on the middle of ${refName}, it has to cover a <span class="num">${R(b.w)}×${R(b.h)}</span> box (<span class="num">${ar(b.w / b.h)}</span>, in ${ref.name}'s pixels) to reach every monitor. ${cut(b)}</p>`);
     } else if (A.kind === "split") {
       // A smaller monitor further out from the largest one can't reach the
       // edge of its slice, so that join lands inside it.
@@ -344,11 +347,9 @@
       out.push(n > 1
         ? `<p>Cut into ${n} slices, each is <span class="num">${ar((iw / n) / ih)}</span>, within 3% of the monitors' shape. So it's full-width: one slice per monitor, placed so the slice of ${refName} sits exactly on it. The other monitors show the part of the image they physically cover.${inside.join("")}</p>`
         : `<p>The image has the monitor's shape (within 3%), so it fills the monitor.</p>`);
-    } else if (A.kind === "pano") {
-      const b = A.desk.box;
-      out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't a monitor shape. So it's one panorama, scaled` : "It's scaled"} to cover the <span class="num">${R(b.w)}×${R(b.h)}</span> box around ${n > 1 ? "all monitors" : "the monitor"} (<span class="num">${ar(b.w / b.h)}</span>). ${cut(b)}</p>`);
     } else {
-      out.push(`<p>Your monitors have different shapes, and each runs the full-width test against its own shape: this image is full-width for some and a panorama for others. Expect a mismatch at the joins.</p>`);
+      const b = A.desk.box;
+      out.push(`<p>${n > 1 ? `Cut into ${n} slices, each would be <span class="num">${ar((iw / n) / ih)}</span>, which isn't the shape of all your monitors. So it's one panorama, scaled` : "It's scaled"} to cover the <span class="num">${R(b.w)}×${R(b.h)}</span> box around ${n > 1 ? "all monitors" : "the monitor"} (<span class="num">${ar(b.w / b.h)}</span>). ${cut(b)}</p>`);
     }
     const tot = A.per.reduce((s, q) => s + (q.reg ? q.reg.src.w * q.reg.src.h : 0), 0) / (iw * ih);
     out.push(`<ul>${A.per.map(q => q.reg
@@ -357,7 +358,7 @@
     return out.join("");
   }
 
-  const KIND_CHIP = { join: ["pano", "Panorama on the join"], split: ["split", "Full-width"], pano: ["pano", "Panorama"], mixed: ["pano", "Mixed"] };
+  const KIND_CHIP = { join: ["pano", "Panorama on the join"], split: ["split", "Full-width"], pano: ["pano", "Panorama"] };
   function renderCase(host, spec) {
     const A = analyse(spec.iw, spec.ih), [cls, txt] = KIND_CHIP[A.kind];
     host.innerHTML = `
@@ -437,13 +438,18 @@
     const lo = 1, hi = Math.max(5, Math.ceil(Math.max(...aspects) + 0.5));
     const P = v => ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo) * 100) + "%";
     let html = `<div class="track"></div>`;
-    shapes.forEach(m => { const x = n * m * 0.97, y = n * m * 1.03; html += `<div class="band" style="left:${P(x)};width:calc(${P(y)} - ${P(x)})"></div>`; });
+    // Full-width: within 3% of every monitor's shape, so the range is
+    // where the monitors' ranges overlap (nowhere, if they differ much).
+    const fwLo = n * Math.max(...shapes) * 0.97, fwHi = n * Math.min(...shapes) * 1.03;
+    if (fwLo < fwHi) html += `<div class="band" style="left:${P(fwLo)};width:calc(${P(fwHi)} - ${P(fwLo)})"></div>`;
     html += `<div class="fit" style="left:${P(fa)}"></div>`;
     const legend = `<span><i class="sw" style="background:var(--chip-split-ink)"></i>full-width range</span><span><i class="sw" style="background:var(--chip-pano);border:1px solid var(--line)"></i>panorama</span><span><i class="sw" style="background:var(--ink);width:2px"></i>${ar(fa)} panorama fits exactly</span>`;
     const pano = `Anything else is a panorama${state.join ? ", centered on the join" : ""}: narrower than <span class="num">${ar(fa)}</span> loses top and bottom, wider loses the sides.`;
     const note = shapes.length === 1
       ? `With ${n} monitor${n > 1 ? "s" : ""}, anything between <span class="num">${ar(n * shapes[0] * 0.97)}</span> and <span class="num">${ar(n * shapes[0] * 1.03)}</span> is full-width. ${pano}`
-      : `Your monitors have different shapes, so each runs the full-width test for its own shape (one band each). ${pano}`;
+      : fwLo < fwHi
+        ? `Your monitors have slightly different shapes. A full-width image has to match all of them: anything between <span class="num">${ar(fwLo)}</span> and <span class="num">${ar(fwHi)}</span>. ${pano}`
+        : `Your monitors have different shapes, so no image can be full-width for all of them. Every spanned image is a panorama${state.join ? ", centered on the join" : ""}: narrower than <span class="num">${ar(fa)}</span> loses top and bottom, wider loses the sides.`;
     [16, 21, 32, 48, 64].forEach(w => { if (w / 9 > lo && w / 9 <= hi) html += `<span class="tick" style="left:${P(w / 9)}">${w}:9</span>`; });
     EXAMPLES.forEach((e, i) => { html += `<span class="mk" style="left:${P(e.iw / e.ih)}">${i + 1}</span>`; });
     const c = state.custom; html += `<span class="mk" style="left:${P(c.iw / c.ih)};color:var(--accent)">yours</span>`;

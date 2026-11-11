@@ -121,7 +121,7 @@ instead of their pixel counts.
 
 **Full-width images** are as wide as all of your monitors together. To
 find them, the plugin cuts the image into one equal slice per monitor:
-if a slice has the shape of your monitor (within 3%), the image is
+if a slice has the shape of every monitor (within 3%), the image is
 full-width, and each slice goes to its own monitor. For example, a
 5120×1440 image on two 16:9 monitors is two 2560×1440 slices, one per
 monitor.
@@ -181,10 +181,10 @@ label above them.
 - Spanning expects the monitors side by side in one row. They can have
   different heights and vertical positions, but monitors stacked above one
   another are not supported.
-- Monitors of different shapes (say a 16:9 next to a 16:10) can disagree
-  about an image: each one checks whether the image is full-width against
-  its own shape, so it can be full-width on one and a panorama on the
-  other, and then the two don't line up at the join.
+- With monitors of different shapes (say a 16:9 next to a 16:10, or a
+  landscape next to a portrait one), no image is full-width: its slices
+  would have to match every monitor. Every spanned image is then shown as
+  a panorama.
 - A gap left between two monitors in the display settings is kept for
   panoramas, but a full-width image ignores it: the monitor past the gap
   then has an empty strip as wide as the gap.
