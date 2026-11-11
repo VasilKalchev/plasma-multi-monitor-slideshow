@@ -8,6 +8,12 @@ import QtQuick
 Image {
     id: layer
 
+    // The picture this layer is for. `source` is set to it by main.qml
+    // once the picture can be placed (see `placed`), so it is decoded once,
+    // at its final size: decoding a spanned picture before its shape was
+    // known decoded it a second time whenever the shape turned out to be
+    // full-width.
+    property string picture: ""
     // Whether the picture is spanned across all screens.
     property bool span: false
     // A spanned picture's natural size; (0, 0) until measured, (-1, -1) if
@@ -56,7 +62,7 @@ Image {
         asynchronous: true
         cache: false
         sourceSize: Qt.size(1024, 0)
-        source: layer.span && layer.probeSize.width === 0 ? layer.source : ""
+        source: layer.span && layer.probeSize.width === 0 ? layer.picture : ""
         onStatusChanged: {
             if (status === Image.Ready) {
                 layer.probeSize = Qt.size(implicitWidth, implicitHeight);

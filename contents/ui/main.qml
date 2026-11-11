@@ -84,12 +84,15 @@ WallpaperItem {
     function loadSource(src, isSpan) {
         // First-ever load: straight onto the front layer, no fade -
         // there's nothing on screen yet to fade from.
-        var layer = String(front.source) === "" ? front : back;
+        var layer = front.picture === "" ? front : back;
         layer.span = isSpan;
         var known = _probeCache[_probeKey(src)];
         layer.probeSize = known !== undefined ? known : Qt.size(0, 0);
         layer.geom = computeGeomFor(isSpan, layer.probeSize);
-        layer.source = src;
+        layer.picture = src;
+        // A spanned picture that hasn't been measured waits for its probe
+        // (layerMeasured()); until then the layer is empty.
+        layer.source = layer.placed ? src : "";
         pending = layer;
     }
 
@@ -104,7 +107,7 @@ WallpaperItem {
         }
         if (layer.status === Image.Error) {
             pending = null;
-            console.warn(SpanState.logPrefix + root.myScreenName + " can't load " + layer.source);
+            console.warn(SpanState.logPrefix + root.myScreenName + " can't load " + layer.picture);
         } else if (layer.status === Image.Ready && layer.placed) {
             pending = null;
             front = layer;
@@ -114,20 +117,24 @@ WallpaperItem {
     // A layer that has faded out lets go of its picture.
     function layerFaded(layer) {
         if (layer.opacity === 0 && layer !== front && layer !== pending) {
+            layer.picture = "";
             layer.source = "";
         }
     }
 
     function layerMeasured(layer) {
         if (layer.probeSize.width < 0) {
-            console.warn(SpanState.logPrefix + "can't measure " + layer.source + ", placing it as a panorama");
+            console.warn(SpanState.logPrefix + "can't measure " + layer.picture + ", placing it as a panorama");
         } else {
             var cache = _probeCache;
-            cache[_probeKey(String(layer.source))] = layer.probeSize;
+            cache[_probeKey(layer.picture)] = layer.probeSize;
             _probeCache = cache;
         }
-        // A new size makes the layer decode again; the same size doesn't.
+        // The geometry first, then the picture, so it is decoded once.
         layer.geom = computeGeomFor(layer.span, layer.probeSize);
+        if (String(layer.source) !== layer.picture) {
+            layer.source = layer.picture;
+        }
         layerChanged(layer);
     }
 
@@ -138,9 +145,10 @@ WallpaperItem {
     // replace it when ready.
     onCurrentSourceChanged: {
         if (currentSource !== ""
-                && currentSource === String(front.source)
+                && currentSource === front.picture
                 && isSpanTurn === front.span) {
             if (pending === back) {
+                back.picture = "";
                 back.source = "";
                 pending = null;
             }
