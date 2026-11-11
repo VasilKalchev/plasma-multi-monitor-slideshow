@@ -247,7 +247,11 @@ QtObject {
             _shuffledIndices = [];
             _shuffledLap = -1;
         }
-        order = sortOrder;
+        // Values the settings page can't produce (a config file edited by
+        // hand): an unknown order is Random, as the page shows it, and an
+        // interval that isn't a positive number is the default. Intervals
+        // under a minute are kept; the page shows them as 1 minute.
+        order = sortOrder >= 1 && sortOrder <= 4 ? Math.floor(sortOrder) : 0;
         _sortKeys = sortKeys;
         if (order === 0) {
             spanList.sort();
@@ -259,7 +263,7 @@ QtObject {
         spanImages = spanList;
         singleImages = singleList;
         _turnsScreens = -1;
-        slideInterval = interval;
+        slideInterval = interval >= 1 ? Math.min(Math.floor(interval), 86400) : 900;
         scanCompleted = scanClaim;
         pickCurrent();
     }
