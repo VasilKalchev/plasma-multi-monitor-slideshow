@@ -88,7 +88,12 @@ script refuses to replace a folder that is a git checkout.
   <archive>`) and upload it on the KDE Store product's Files tab (archive the old
   file), with a changelog entry: the version as its title, Markdown as
   its text. The store's description is BBCode and joins single line
-  breaks, so every paragraph needs an empty line before it. The store product (https://store.kde.org/p/2375225/) is in **Plasma 6 Extensions ›
+  breaks, so every paragraph needs an empty line before it.
+  Get New Plugins… doesn't read the website but the OCS API
+  (`https://api.kde-look.org/ocs/v1/content/data/2375225?format=json`),
+  whose version, downloads, score and comments are a snapshot from the
+  product's last change, so its window can show older numbers than the
+  website. The store product (https://store.kde.org/p/2375225/) is in **Plasma 6 Extensions ›
   Plasma 6 Wallpaper Plugins**, the category Get New Plugins… reads. Its
   thumbnail (also the README's and the site's picture) is
   `docs/images/preview.png`, drawn by `utils/make-preview.py` (needs
@@ -155,9 +160,13 @@ script refuses to replace a folder that is a git checkout.
   back the requested size). Only the aspect ratio is used.
 - **Screen identity** comes from the connector name (`Screen.name`), not
   the position, which changes during every display reconfiguration.
+  Picking pictures by position swapped the wallpapers when a monitor was
+  added: don't go back to it.
 - **The desk math lives in `desk.js`** (`.pragma library`), shared by
   `main.qml` and `config.qml`: the settings page lays out the same desk to
-  gray out the spanned-image settings that make no difference. Change the
+  gray out the spanned-image settings that make no difference. It goes
+  by the connected monitors only, not by the folders' contents: that
+  would need the shape of every spanned picture. Change the
   placement there, not in a copy, and then the port of it in
   `docs/cropping.html`, which runs the same math in the browser.
 - **Monitor size corrections** (`MonitorSizes`) are keyed by
