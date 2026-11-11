@@ -85,13 +85,15 @@ script refuses to replace a folder that is a git checkout.
   `metadata.json`, commit, tag
   `v<version>`, push the tag, and run `utils/package.sh` for the archive.
   Attach it to a GitHub release (`gh release create v<version>
-  <archive>`) and upload it on the KDE Store product's Files tab, with a
-  changelog entry. The store product (https://store.kde.org/p/2375225/) is in **Plasma 6 Extensions ›
+  <archive>`) and upload it on the KDE Store product's Files tab (archive the old
+  file), with a changelog entry: the version as its title, Markdown as
+  its text. The store's description is BBCode and joins single line
+  breaks, so every paragraph needs an empty line before it. The store product (https://store.kde.org/p/2375225/) is in **Plasma 6 Extensions ›
   Plasma 6 Wallpaper Plugins**, the category Get New Plugins… reads. Its
   thumbnail (also the README's and the site's picture) is
   `docs/images/preview.png`, drawn by `utils/make-preview.py` (needs
   Inkscape and ImageMagick); the settings screenshots are its other gallery pictures (its description, which doesn't scale pictures down to its 720 px column, uses the small crops of them in `docs/images/store/`: make those again when the screenshots change), and
-  its logo is the preview with a larger name on a transparent background, drawn by `utils/make-logo.py` (needs cairosvg, pillow and numpy; `store/logo.png` in the notes folder). The website is
+  its logo is the preview with a larger name on a transparent background, drawn by `utils/make-logo.py` (needs cairosvg, pillow and numpy; uploaded to the store, not kept in the repo). The website is
   GitHub Pages, served from `docs/` on `main`.
 
 ## Gotchas
