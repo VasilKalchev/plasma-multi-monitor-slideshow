@@ -90,7 +90,7 @@ script refuses to replace a folder that is a git checkout.
   Plasma 6 Wallpaper Plugins**, the category Get New Plugins… reads. Its
   thumbnail (also the README's and the site's picture) is
   `docs/images/preview.png`, drawn by `utils/make-preview.py` (needs
-  Inkscape and ImageMagick); the settings screenshots are its other gallery pictures, and
+  Inkscape and ImageMagick); the settings screenshots are its other gallery pictures (its description, which doesn't scale pictures down to its 720 px column, uses the small crops of them in `docs/images/store/`: make those again when the screenshots change), and
   its logo is the preview with a larger name on a transparent background, drawn by `utils/make-logo.py` (needs cairosvg, pillow and numpy; `store/logo.png` in the notes folder). The website is
   GitHub Pages, served from `docs/` on `main`.
 
