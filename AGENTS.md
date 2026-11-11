@@ -164,3 +164,64 @@ script refuses to replace a folder that is a git checkout.
   400 px shapes on both sides of the seam, made by `make-span-test.sh`)
   and a ruler: a 400 px square should measure 400 / f px on a monitor
   with factor f, and the lines should continue straight across the bezel.
+
+## Testing on the desktop
+
+None of this needs clicking or a screenshot of the screen.
+
+- **Instrumented copy.** Copy `metadata.json`, `LICENSE`, `README.md`,
+  `contents/` and `utils/deploy.sh` to a scratch folder, add the test
+  code there, and run that copy's `deploy.sh`. The repo stays clean. At
+  the end run the repo's `deploy.sh`.
+- **Trigger hook** (in the copy's `main.qml`): a `FolderListModel` on a
+  scratch control folder, `nameFilters: ["*"]`, that handles each new
+  file name once in `onCountChanged`. `touch ctl/101-nextspan` can then
+  call `nextSpannedAction.trigger()` (`PlasmaCore.Action` has
+  `trigger()`), and a `grab` file `root.grabToImage()`, saving one PNG
+  per screen. Gate the actions on one screen (`myScreenName === "DP-2"`),
+  or every screen runs them. Create the control folder first: a missing
+  one is listed as the home folder. Files left in it run again after a
+  shell restart.
+- **Trace lines**: `console.info("MMS-TEST …")` in
+  `SpanState.configure()`, the timers, `report()`, `loadSource()` and on
+  `Image.Loading` in `ImageLayer.qml`; read them with `journalctl --user
+  -u plasma-plasmashell.service --since … -o short-precise`.
+- **Test settings**: with `qdbus org.kde.plasmashell /PlasmaShell
+  org.kde.PlasmaShell.evaluateScript`, on every desktop in `desktops()`
+  that uses the plugin, set `currentConfigGroup = ["Wallpaper",
+  "<plugin id>", "General"]` and `writeConfig()` `SinglePaths`,
+  `SpanPaths` (arrays), `SlideInterval` and a new `ConfigStamp`, then
+  restart the shell. Restore the saved values the same way, with the
+  original stamp, and restart. Copy
+  `~/.config/plasma-org.kde.plasma.desktop-appletsrc` first, and tell the
+  user before swapping their settings.
+- **Test pictures**: a few solid-color PNGs made with `magick` as
+  individual images and `utils/span-test-5120x1440.png` as the only
+  spanned one. One spanned image among several individual ones stresses
+  Next Spanned.
+- **Seam check**: grab every screen on the seam-test picture before and
+  after a change and compare the grabs with `magick compare -metric AE`.
+  They should be identical.
+- **Settings page**: `timeout 10 kcmshell6 kcm_wallpaper 2>err.log` loads
+  the installed `config.qml` in its own process; its messages are on
+  stderr. A missing folder is listed as that process's working
+  directory, not the home folder.
+- **JS logic in Node**: `desk.js` and `images.js` load with `vm` once the
+  `.pragma library` line is removed. Functions of the QML files can be
+  cut out by name (from `    function name(` to the next `\n    }\n`)
+  and evaluated inside `with (state) { … }`.
+- **Scripts**: `utils/package.sh`, `kwin-layout-keeper.py --dry-run`,
+  and `make-logo.py <out.png>` in a venv with cairosvg, pillow and numpy.
+
+Mistakes made while testing, to avoid:
+
+- **Don't put test code in `config.qml` that changes `cfg_` values.** If
+  the user opens Desktop Folder Settings while such a copy is installed,
+  the dialog shows the changed values, and an Apply saves them over the
+  user's settings. Keep page tests read-only.
+- **A QML value type stored in a JS object is a reference** to the
+  property it was read from (`cache[k] = layer.probeSize` read 0x0 once
+  the layer moved on). Store a copy (`Qt.size(w, h)`).
+- **Two properties that one binding reads**: set them in the order that
+  doesn't produce a wrong value in between (`currentSpanImage`, then
+  `isSpanTurn`).
