@@ -105,6 +105,12 @@ QtObject {
         return c !== 0 ? c : (a < b ? -1 : (a > b ? 1 : 0));
     }
 
+    // When the file was last modified, in ms; 0 if it isn't in the lists.
+    function modifiedTime(url) {
+        var key = _sortKeys[url];
+        return key !== undefined ? key.time : 0;
+    }
+
     // Merges both sorted lists into one lap. A span image is one turn; a
     // single-image turn takes the next screenCount single images, one per
     // screen, so no screen repeats the picture its neighbour just had.

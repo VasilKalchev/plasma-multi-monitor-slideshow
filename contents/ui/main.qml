@@ -53,12 +53,18 @@ WallpaperItem {
     readonly property bool isSpanTurn: SpanState.isSpanTurn
     property string currentSource: isSpanTurn ? SpanState.currentSpanImage : computeMySingleSource()
 
-    // Cache of image URL -> natural pixel size, so an image that has
+    // Cache of image -> natural pixel size, so an image that has
     // already been shown once never needs to be re-probed. Without this,
     // a short rotation interval could keep resetting the probe before it
     // finishes loading, permanently falling back to panorama treatment
     // for images that are actually pre-composed multi-monitor halves.
+    // Keyed by the URL and the file's modification time, so a file
+    // replaced by one of another shape is measured again. A probe that
+    // failed isn't kept: the file may have been half-written.
     property var _probeCache: ({})
+    function _probeKey(src) {
+        return src + "|" + SpanState.modifiedTime(src);
+    }
 
     // Two picture layers (ImageLayer.qml), crossfaded, so changing
     // wallpapers doesn't flash to black like a plain source swap would (the
@@ -79,7 +85,8 @@ WallpaperItem {
         // there's nothing on screen yet to fade from.
         var layer = String(front.source) === "" ? front : back;
         layer.span = isSpan;
-        layer.probeSize = _probeCache[src] !== undefined ? _probeCache[src] : Qt.size(0, 0);
+        var known = _probeCache[_probeKey(src)];
+        layer.probeSize = known !== undefined ? known : Qt.size(0, 0);
         layer.geom = computeGeomFor(isSpan, layer.probeSize);
         layer.source = src;
         pending = layer;
@@ -110,9 +117,11 @@ WallpaperItem {
     }
 
     function layerMeasured(layer) {
-        var cache = _probeCache;
-        cache[String(layer.source)] = layer.probeSize;
-        _probeCache = cache;
+        if (layer.probeSize.width > 0) {
+            var cache = _probeCache;
+            cache[_probeKey(String(layer.source))] = layer.probeSize;
+            _probeCache = cache;
+        }
         // A new size makes the layer decode again; the same size doesn't.
         layer.geom = computeGeomFor(layer.span, layer.probeSize);
         layerChanged(layer);
