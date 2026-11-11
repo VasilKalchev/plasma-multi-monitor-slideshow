@@ -231,11 +231,24 @@ QtObject {
         return true;
     }
 
-    // Called by whichever screen instance claimed and ran the scan. Only
-    // the claim holder gets here, so the claim this retires is the current
-    // one. The lists arrive unsorted; sortKeys maps each URL to its file
-    // name and modification time, for the sorted orders.
-    function configure(spanList, singleList, interval, sortOrder, sortKeys) {
+    // Called by a screen instance that claimed and ran a scan. The lists
+    // arrive unsorted; sortKeys maps each URL to its file name and
+    // modification time, for the sorted orders.
+    //
+    // `claim` is the signature the scan was claimed with. If the current
+    // claim is for other settings, the scan is dropped: it was started by
+    // a screen whose settings were older (at startup, before the screens
+    // have shared theirs), and its lists would replace the newer scan's,
+    // or be taken for it. A scan of the same settings claimed at an
+    // earlier tick is as good as the current one, and is used: a scan
+    // slower than the interval would otherwise never be.
+    function _claimSettings(claim) {
+        return claim.slice(0, claim.lastIndexOf("|"));
+    }
+    function configure(claim, spanList, singleList, interval, sortOrder, sortKeys) {
+        if (_claimSettings(claim) !== _claimSettings(scanClaim)) {
+            return;
+        }
         // A shuffle is a permutation of the old total; reshuffle for the new one.
         if (spanList.length + singleList.length !== _shuffledIndices.length) {
             _shuffledIndices = [];

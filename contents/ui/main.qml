@@ -275,6 +275,7 @@ WallpaperItem {
     property int _scanPending: 0
     property int _scanGeneration: 0
     property string _scanConfig: ""   // _configSignature() of the scan in flight
+    property string _scanClaim: ""    // what it was claimed with (see SpanState.claimScan())
 
     Instantiator {
         model: root._scanJobs
@@ -339,7 +340,7 @@ WallpaperItem {
                 keys[files[j].url] = files[j];
             }
         }
-        SpanState.configure(span, single, cfg.SlideInterval, cfg.SlideshowOrder || 0, keys);
+        SpanState.configure(_scanClaim, span, single, cfg.SlideInterval, cfg.SlideshowOrder || 0, keys);
         // Tear the models down (and their threads with them). Deferred: this
         // runs inside the last model's own status handler.
         var gen = _scanGeneration;
@@ -373,10 +374,12 @@ WallpaperItem {
         if (_scanPending > 0 && _scanConfig === config) {
             return;
         }
-        if (!SpanState.claimScan(config + "|" + SpanState.tickCount)) {
+        var claim = config + "|" + SpanState.tickCount;
+        if (!SpanState.claimScan(claim)) {
             return;
         }
         _scanConfig = config;
+        _scanClaim = claim;
         _scanGeneration = _scanGeneration + 1;
         var gen = _scanGeneration;
         var jobs = [];
