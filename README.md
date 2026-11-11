@@ -221,6 +221,18 @@ its colored lines should continue straight across, and the squares and
 circles marked 400 px should measure the same with a ruler on both
 monitors.
 
+**The desktop is black, or the slideshow doesn't change.** The plugin
+writes what it finds to the journal: how many images are in how many
+folders, a folder that wasn't found, an image that can't be loaded, and
+the monitor layout it works with.
+
+```sh
+journalctl --user -u plasma-plasmashell.service | grep "Multi-monitor Slideshow"
+```
+
+A folder on a drive that isn't mounted yet is looked for again every 30
+seconds while there are no images, and at every change otherwise.
+
 ## Uninstall
 
 ```sh
