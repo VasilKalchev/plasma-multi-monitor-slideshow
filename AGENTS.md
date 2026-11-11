@@ -129,7 +129,14 @@ script refuses to replace a folder that is a git checkout.
   computed on image load, on probe results, at every tick, right away
   when `SpanFit`, `MatchPhysicalSize` or `MonitorSizes` change, and
   (debounced 1.5 s) when `screenLayout` changes. A new input to
-  `computeGeomFor()` needs a matching refresh.
+  `computeGeomFor()` needs a matching refresh. The fill mode and backdrop
+  of individual images are ordinary bindings on the layer.
+- **`layer` inside `ImageLayer.qml` is the root's id**, which hides
+  `Item.layer` in expressions; `layer.enabled: true` written as a
+  property of an item still sets that item's own layer.
+- **`MultiEffect` draws nothing with the software renderer**, which is
+  what `QT_QPA_PLATFORM=offscreen` gives: test the blurred backdrop in a
+  real window.
 - **Layer handover**: only `pending` (the layer a new picture loads into)
   can become `front`, and only once it is Ready and, for a spanned
   picture, measured. A geometry change makes both layers decode again; if
@@ -216,6 +223,10 @@ None of this needs clicking or a screenshot of the screen.
   `.pragma library` line is removed. Functions of the QML files can be
   cut out by name (from `    function name(` to the next `\n    }\n`)
   and evaluated inside `with (state) { … }`.
+- **A layer on its own**: `ImageLayer.qml` only needs QtQuick, so a
+  small `Window` that holds one, sets `geom`, `source` and the fill
+  properties and saves `grabToImage()` results can be run with PySide6
+  (`QQmlApplicationEngine`; there is no `qml` tool here).
 - **Scripts**: `utils/package.sh`, `kwin-layout-keeper.py --dry-run`,
   and `make-logo.py <out.png>` in a venv with cairosvg, pillow and numpy.
 

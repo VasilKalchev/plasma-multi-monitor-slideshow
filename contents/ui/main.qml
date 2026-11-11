@@ -51,6 +51,17 @@ WallpaperItem {
     onMatchPhysicalSizeChanged: refreshGeometry()
     onMonitorSizesChanged: refreshGeometry()
 
+    // SingleFillMode: how an individual image fills its monitor, an
+    // Image.fillMode value like the built-in Slideshow's FillMode.
+    // SingleBlur, SingleColor: what shows where a fitted or centered image
+    // leaves the monitor free. The layers are bound to these, so a change
+    // needs no refresh.
+    readonly property int singleFillMode: [Image.PreserveAspectCrop, Image.Stretch, Image.PreserveAspectFit,
+                                           Image.Pad, Image.Tile].indexOf(cfg.SingleFillMode) !== -1
+                                          ? cfg.SingleFillMode : Image.PreserveAspectCrop
+    readonly property bool singleBlur: cfg.SingleBlur !== false
+    readonly property color singleColor: cfg.SingleColor !== undefined ? cfg.SingleColor : "black"
+
     readonly property bool isSpanTurn: SpanState.isSpanTurn
     property string currentSource: isSpanTurn ? SpanState.currentSpanImage : computeMySingleSource()
 
@@ -99,8 +110,8 @@ WallpaperItem {
         pending = layer;
     }
 
-    // Called when a layer's status changes, and when its picture is
-    // measured.
+    // Called when a layer's status changes, when its picture is measured,
+    // and when its backdrop is decoded.
     function layerChanged(layer) {
         if (layer.status === Image.Ready || layer.status === Image.Error) {
             root.loading = false;
@@ -111,7 +122,7 @@ WallpaperItem {
         if (layer.status === Image.Error) {
             pending = null;
             console.warn(SpanState.logPrefix + root.myScreenName + " can't load " + layer.picture);
-        } else if (layer.status === Image.Ready && layer.placed) {
+        } else if (layer.status === Image.Ready && layer.placed && layer.backdropReady) {
             pending = null;
             front = layer;
         }
@@ -505,7 +516,7 @@ WallpaperItem {
     // copy its values into their own config, so the dialog on any screen
     // shows (and edits) the same settings.
     readonly property var sharedKeys: ["SpanPaths", "SinglePaths", "DisabledPaths", "SlideInterval", "SlideshowOrder", "SpanFit",
-        "MatchPhysicalSize", "MonitorSizes", "ShowWallpaperHeader", "ShowOpenImageAction",
+        "MatchPhysicalSize", "MonitorSizes", "SingleFillMode", "SingleBlur", "SingleColor", "ShowWallpaperHeader", "ShowOpenImageAction",
         "ShowNextAction", "ShowNextIndividualAction", "ShowNextSpannedAction"]
 
     function _stampOf(value) {
@@ -704,6 +715,10 @@ WallpaperItem {
         ImageLayer {
             id: layerA
             shown: root.front === layerA
+            singleFillMode: root.singleFillMode
+            blurBackdrop: root.singleBlur
+            backdropColor: root.singleColor
+            onBackdropReadyChanged: root.layerChanged(layerA)
             onStatusChanged: root.layerChanged(layerA)
             onOpacityChanged: root.layerFaded(layerA)
             onMeasured: root.layerMeasured(layerA)
@@ -712,6 +727,10 @@ WallpaperItem {
         ImageLayer {
             id: layerB
             shown: root.front === layerB
+            singleFillMode: root.singleFillMode
+            blurBackdrop: root.singleBlur
+            backdropColor: root.singleColor
+            onBackdropReadyChanged: root.layerChanged(layerB)
             onStatusChanged: root.layerChanged(layerB)
             onOpacityChanged: root.layerFaded(layerB)
             onMeasured: root.layerMeasured(layerB)

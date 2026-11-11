@@ -38,6 +38,18 @@
       <label>Corrected sizes of monitors that report a wrong one, as "make model=diagonal in inches"</label>
       <default></default>
     </entry>
+    <entry name="SingleFillMode" type="Int">
+      <label>How an individual image fills its monitor: 2 = scaled and cropped, 0 = scaled, 1 = scaled, keep proportions, 6 = centered, 3 = tiled</label>
+      <default>2</default>
+    </entry>
+    <entry name="SingleBlur" type="Bool">
+      <label>Fill the part of the monitor a fitted or centered individual image leaves free with a blurred copy of it; otherwise with SingleColor</label>
+      <default>true</default>
+    </entry>
+    <entry name="SingleColor" type="Color">
+      <label>Background color behind a fitted or centered individual image</label>
+      <default>#000000</default>
+    </entry>
     <entry name="ConfigStamp" type="String">
       <label>When the settings were last edited (ms since the epoch); the newest settings are shared by every screen</label>
       <default></default>

@@ -105,6 +105,8 @@ Click a folder to see its images. A spanning folder shows wide previews:
 | **Same physical size on every monitor** | Scales spanned images per monitor, so they have the same real size on monitors with different pixel sizes, and lines continue straight across the bezel. |
 | **Monitor Sizes…** | The size of each monitor, as it reports it. Correct a monitor that reports a wrong size here. |
 | **Always center on the bezel between the monitors** | Off by default. Full-width images are always centered on the bezel; with this on, panoramas are too, instead of on your monitors as a whole. See below. |
+| **Individual images** | How an individual image fills its monitor, like **Positioning** in the built-in Slideshow: **Scaled and Cropped** (the default) covers the monitor and cuts off what doesn't fit, **Scaled** stretches the image to the monitor's shape, **Scaled, Keep Proportions** shows the whole image, **Centered** shows it at its own size (smaller only if it's larger than the monitor), **Tiled** repeats it. |
+| **Background** | For **Scaled, Keep Proportions** and **Centered**: what fills the part of the monitor the image leaves free, a blurred copy of the image or a color you pick. |
 
 **Order** and **Context Menu…** open these lists:
 

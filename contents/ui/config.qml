@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.kquickcontrols as KQuickControls
 import "desk.js" as Desk
 
 ColumnLayout {
@@ -33,6 +34,26 @@ ColumnLayout {
     property bool cfg_MatchPhysicalSizeDefault: true
     property list<string> cfg_MonitorSizes: []
     property list<string> cfg_MonitorSizesDefault: []
+
+    // Image.fillMode values, like the built-in Slideshow's FillMode.
+    property int cfg_SingleFillMode: Image.PreserveAspectCrop
+    property int cfg_SingleFillModeDefault: Image.PreserveAspectCrop
+    property bool cfg_SingleBlur: true
+    property bool cfg_SingleBlurDefault: true
+    property color cfg_SingleColor: "black"
+    property color cfg_SingleColorDefault: "black"
+    readonly property var fillModes: [
+        { value: Image.PreserveAspectCrop, text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Scaled and Cropped") },
+        { value: Image.Stretch, text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Scaled") },
+        { value: Image.PreserveAspectFit, text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Scaled, Keep Proportions") },
+        { value: Image.Pad, text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Centered") },
+        { value: Image.Tile, text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Tiled") }
+    ]
+    // Only these two can leave part of the monitor free.
+    readonly property bool fillModeHasBackground: cfg_SingleFillMode === Image.PreserveAspectFit
+                                                  || cfg_SingleFillMode === Image.Pad
+
+    onCfg_SingleColorChanged: colorButton.color = cfg_SingleColor
 
     property bool cfg_ShowWallpaperHeader: false
     property bool cfg_ShowWallpaperHeaderDefault: false
@@ -415,6 +436,58 @@ ColumnLayout {
             QQC2.ToolTip.visible: hovered
             QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
             QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Full-width images, as wide as all of your monitors together (such as a 32:9 image on two 16:9 monitors), are always centered on the bezel. Other spanned images, panoramas, are centered on your monitors as a whole when this is off, which cuts off the least. When it's on, they're centered on the bezel between the two middle monitors too (with an odd number, on the middle monitor's center), so a two-part wallpaper made for other monitors, such as two 16:10 halves, still splits on the bezel. More is cut off at the edges.")
+        }
+
+        RowLayout {
+            Kirigami.FormData.label: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Individual images:")
+            spacing: Kirigami.Units.smallSpacing
+
+            QQC2.ComboBox {
+                id: fillCombo
+                model: root.fillModes
+                textRole: "text"
+                valueRole: "value"
+                currentIndex: Math.max(0, root.fillModes.findIndex(m => m.value === root.cfg_SingleFillMode))
+                onActivated: (index) => { root.cfg_SingleFillMode = root.fillModes[index].value; root.stamp(); }
+
+                QQC2.ToolTip.visible: hovered && !popup.visible
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "How an individual image fills its monitor. Scaled and Cropped covers the monitor and cuts off what doesn't fit. Scaled stretches the image to the monitor's shape. Scaled, Keep Proportions shows the whole image. Centered shows it at its own size, made smaller only if it's larger than the monitor. Tiled repeats it.")
+            }
+
+            QQC2.Label {
+                Layout.leftMargin: Kirigami.Units.largeSpacing
+                enabled: root.fillModeHasBackground
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Background:")
+            }
+
+            QQC2.ComboBox {
+                enabled: root.fillModeHasBackground
+                model: [
+                    i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Blur"),
+                    i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Solid color")
+                ]
+                currentIndex: root.cfg_SingleBlur ? 0 : 1
+                onActivated: (index) => { root.cfg_SingleBlur = index === 0; root.stamp(); }
+
+                QQC2.ToolTip.visible: hovered && !popup.visible
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                QQC2.ToolTip.text: root.fillModeHasBackground
+                    ? i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "What fills the part of the monitor the image leaves free: a blurred copy of the image, or a color")
+                    : i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Only Scaled, Keep Proportions and Centered can leave part of the monitor free")
+            }
+
+            // `color` is the dialog's own property, which the dialog
+            // assigns: a binding wouldn't survive, so it is set by hand.
+            KQuickControls.ColorButton {
+                id: colorButton
+                visible: !root.cfg_SingleBlur
+                enabled: root.fillModeHasBackground
+                showAlphaChannel: false
+                dialogTitle: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Select Background Color")
+                Component.onCompleted: color = root.cfg_SingleColor
+                onAccepted: (color) => { root.cfg_SingleColor = color; root.stamp(); }
+            }
         }
 
         QQC2.Label {

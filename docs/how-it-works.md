@@ -80,8 +80,13 @@ So a slow image never fades in a blank frame, a spanned image never
 jumps into place after it appears, and changing images never flashes
 black. The layer that faded out then lets go of its image.
 
-Individual images simply fill their screen: scaled to cover it, with the
-overflow cut evenly from both sides.
+Individual images fill their screen the way the **Individual images**
+setting says. By default they are scaled to cover it, with the overflow
+cut evenly from both sides. A mode that can leave part of the screen free
+(**Scaled, Keep Proportions** and **Centered**) gets a backdrop inside the
+same layer, under the image: the background color, and for **Blur** a
+quarter-size copy of the image, scaled to cover the screen and blurred.
+The layer fades in once the backdrop is decoded too.
 
 A spanned image has to line up across screens, so every screen works out
 the same layout and then draws only its own part:
