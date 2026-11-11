@@ -185,6 +185,9 @@ label above them.
   about an image: each one checks whether the image is full-width against
   its own shape, so it can be full-width on one and a panorama on the
   other, and then the two don't line up at the join.
+- A gap left between two monitors in the display settings is kept for
+  panoramas, but a full-width image ignores it: the monitor past the gap
+  then has an empty strip as wide as the gap.
 - Nothing is hidden behind the bezels: the image goes straight on from one
   monitor's edge to the next one's. Horizontal lines stay straight, but a
   slanted line looks shifted where it crosses a bezel.
