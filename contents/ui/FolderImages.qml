@@ -20,6 +20,7 @@ import Qt.labs.folderlistmodel
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as P5Support
 import "desk.js" as Desk
+import "images.js" as Images
 
 ColumnLayout {
     id: root
@@ -38,7 +39,7 @@ ColumnLayout {
                                  ? folderModels.object : null
 
     // The rows of `files` in the order the grid shows them: shuffled for
-    // Random, else sorted like the slideshow (SpanState.compareImages()).
+    // Random, else sorted like the slideshow (compare() in images.js).
     // FolderListModel's own sorting puts upper-case names first, so it
     // isn't used. The grid can't reorder a FolderListModel, so it shows
     // this list instead and reads each cell's file from `files`; any
@@ -74,14 +75,7 @@ ColumnLayout {
                     url: String(files.get(i, "fileUrl"))
                 };
             });
-            list.sort((a, b) => {
-                const ka = keys[a], kb = keys[b];
-                const c = root.order === 1 ? ka.name.localeCompare(kb.name)
-                        : root.order === 2 ? -ka.name.localeCompare(kb.name)
-                        : root.order === 3 ? kb.time - ka.time
-                        : ka.time - kb.time;
-                return c !== 0 ? c : (ka.url < kb.url ? -1 : (ka.url > kb.url ? 1 : 0));
-            });
+            list.sort((a, b) => Images.compare(root.order, keys[a], keys[b]));
         }
         return list;
     }
@@ -262,7 +256,7 @@ ColumnLayout {
             showDirs: false
             showFiles: true
             caseSensitive: false
-            nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.bmp"]
+            nameFilters: Images.nameFilters
         }
     }
 

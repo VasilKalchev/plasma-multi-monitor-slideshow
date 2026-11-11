@@ -26,6 +26,7 @@ import Qt.labs.folderlistmodel
 import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import "desk.js" as Desk
+import "images.js" as Images
 
 WallpaperItem {
     id: root
@@ -291,11 +292,8 @@ WallpaperItem {
             folder: modelData.folder
             showDirs: false
             showFiles: true
-            // caseSensitive: false rather than listing each extension twice -
-            // the doubled list still missed mixed-case spellings like ".JpEg"
-            // that come out of some cameras and editors.
             caseSensitive: false
-            nameFilters: ["*.jpg", "*.jpeg", "*.png", "*.webp", "*.bmp"]
+            nameFilters: Images.nameFilters
 
             function report() {
                 if (reported || status !== FolderListModel.Ready) {
@@ -338,7 +336,7 @@ WallpaperItem {
             var files = _scanResults[i] || [];
             for (var j = 0; j < files.length; j++) {
                 target.push(files[j].url);
-                keys[files[j].url] = { name: files[j].name, time: files[j].time };
+                keys[files[j].url] = files[j];
             }
         }
         SpanState.configure(span, single, cfg.SlideInterval, cfg.SlideshowOrder || 0, keys);

@@ -15,6 +15,7 @@ together. [cropping.md](cropping.md) covers the placement math in detail.
 | `contents/ui/qmldir` | Registers `SpanState` as a singleton, which is what makes it one object for every screen. |
 | `contents/ui/ImageLayer.qml` | One of the two crossfading image layers on a screen. |
 | `contents/ui/desk.js` | The desk that spanned images are laid out on (see below), used by `main.qml` and `config.qml`. |
+| `contents/ui/images.js` | Which files count as images and how the sorted orders compare them, used by the slideshow and by the settings page's thumbnail grid. |
 | `contents/ui/config.qml` | The settings page. |
 | `contents/ui/FolderListSection.qml` | One folder list on the settings page. |
 | `contents/ui/FolderImages.qml` | The thumbnail grid on the settings page. |

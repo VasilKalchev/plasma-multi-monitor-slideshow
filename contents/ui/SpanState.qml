@@ -11,6 +11,7 @@
 pragma Singleton
 import QtQuick
 import "desk.js" as Desk
+import "images.js" as Images
 
 QtObject {
     id: root
@@ -50,7 +51,7 @@ QtObject {
     // { single: index into singleImages }, built for _turnsScreens screens.
     property var _turns: []
     property int _turnsScreens: -1
-    property var _sortKeys: ({})     // url -> { name: lowercase file name, time: ms }
+    property var _sortKeys: ({})     // url -> { name: lowercase file name, time: ms, url }
 
     // Screens at distinct positions; mirrored screens show the same image.
     readonly property int screenCount: Math.max(1, Desk.screenCount(Qt.application.screens))
@@ -86,23 +87,10 @@ QtObject {
         return a;
     }
 
-    // Sort comparator for the sorted orders; ties fall back to the URL so
-    // the order is total and the same on every screen.
+    // Sort comparator for the sorted orders (see images.js).
     function compareImages(a, b) {
-        var ka = _sortKeys[a] || { name: a, time: 0 };
-        var kb = _sortKeys[b] || { name: b, time: 0 };
-        var c = 0;
-        if (order === 1 || order === 2) {
-            c = ka.name.localeCompare(kb.name);
-            if (order === 2) {
-                c = -c;
-            }
-        } else if (order === 3) {
-            c = kb.time - ka.time;
-        } else if (order === 4) {
-            c = ka.time - kb.time;
-        }
-        return c !== 0 ? c : (a < b ? -1 : (a > b ? 1 : 0));
+        return Images.compare(order, _sortKeys[a] || { name: a, time: 0, url: a },
+                              _sortKeys[b] || { name: b, time: 0, url: b });
     }
 
     // When the file was last modified, in ms; 0 if it isn't in the lists.
