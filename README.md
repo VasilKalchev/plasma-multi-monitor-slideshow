@@ -50,7 +50,7 @@ the same moment.
 
 1. Right-click the desktop and choose **Desktop and Wallpaper…**
 2. Click **Get New Plugins…** and search for **Multi-monitor Slideshow**.
-3. Click **Install**.
+3. Click **Install**, then set it up as described in [Use](#use).
 
 Its store page is
 [https://store.kde.org/p/2375225](https://store.kde.org/p/2375225/).
@@ -83,14 +83,22 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 
 1. Right-click the desktop and choose **Desktop and Wallpaper…**
 2. Set **Wallpaper type** to **Multi-monitor Slideshow**.
-3. Add folders:
+3. **Do this on every monitor.** Plasma keeps a separate wallpaper type
+   for each monitor, and the dialog only changes the monitor you
+   right-clicked. Right-click the desktop on each of the other monitors
+   and set the wallpaper type there too. The plugin's settings are shared,
+   so you only add folders and pick options once.
+4. Add folders:
    - **Individual folders** for ordinary wallpapers, one per monitor.
    - **Spanning folders** for wide images that go across all monitors.
 
    Folders are read one level deep (subfolders are not included). JPEG,
    PNG, WebP and BMP images are used.
-4. Choose how often the image changes and in which order, then click
+5. Choose how often the image changes and in which order, then click
    **Apply**.
+
+If a spanned image shows on only one monitor, step 3 was missed: the
+other monitors still have another wallpaper type.
 
 ### Settings
 
