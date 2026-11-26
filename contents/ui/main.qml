@@ -33,6 +33,15 @@ WallpaperItem {
 
     readonly property var cfg: root.configuration
 
+    // The settings the slideshow runs with. The lock screen, while it shows
+    // the desktop's slideshow (FollowDesktop), runs with the desktop's,
+    // taken from the saved state (SpanState.followSettings), not its own:
+    // the same folders, order and interval, and the same way of drawing
+    // the images, so nothing jumps on unlock. Everywhere else, and for the
+    // settings the slideshow doesn't take from the desktop (the context
+    // menu, Resume), the screen's own `cfg`.
+    readonly property var eff: SpanState.followSettings !== null ? SpanState.followSettings : cfg
+
     // SpanFit: where a panorama (a spanned image that isn't full-width, see
     // computeGeomFor()) is centered: 0 = on the box around all monitors,
     // 1 = on the join between the monitors (and vertically on the largest
@@ -44,9 +53,9 @@ WallpaperItem {
     // Recompute both layers right away when any of them changes, in case
     // the config change does reach this instance (otherwise it applies on
     // the next tick, like the folder lists).
-    readonly property int spanFit: cfg.SpanFit === 1 ? 1 : 0
-    readonly property bool matchPhysicalSize: cfg.MatchPhysicalSize !== false
-    readonly property var monitorSizes: Desk.parseSizes(cfg.MonitorSizes)
+    readonly property int spanFit: eff.SpanFit === 1 ? 1 : 0
+    readonly property bool matchPhysicalSize: eff.MatchPhysicalSize !== false
+    readonly property var monitorSizes: Desk.parseSizes(eff.MonitorSizes)
     onSpanFitChanged: refreshGeometry()
     onMatchPhysicalSizeChanged: refreshGeometry()
     onMonitorSizesChanged: refreshGeometry()
@@ -57,10 +66,10 @@ WallpaperItem {
     // leaves the monitor free. The layers are bound to these, so a change
     // needs no refresh.
     readonly property int singleFillMode: [Image.PreserveAspectCrop, Image.Stretch, Image.PreserveAspectFit,
-                                           Image.Pad, Image.Tile].indexOf(cfg.SingleFillMode) !== -1
-                                          ? cfg.SingleFillMode : Image.PreserveAspectCrop
-    readonly property bool singleBlur: cfg.SingleBlur !== false
-    readonly property color singleColor: cfg.SingleColor !== undefined ? cfg.SingleColor : "black"
+                                           Image.Pad, Image.Tile].indexOf(eff.SingleFillMode) !== -1
+                                          ? eff.SingleFillMode : Image.PreserveAspectCrop
+    readonly property bool singleBlur: eff.SingleBlur !== false
+    readonly property color singleColor: eff.SingleColor !== undefined ? eff.SingleColor : "black"
 
     readonly property bool isSpanTurn: SpanState.isSpanTurn
     property string currentSource: isSpanTurn ? SpanState.currentSpanImage : computeMySingleSource()
@@ -160,7 +169,24 @@ WallpaperItem {
     // decode and fade the picture already on screen into itself; just drop
     // another picture that may still be loading, which would otherwise
     // replace it when ready.
+    //
+    // Loaded a moment later, once per event-loop turn: one change of turn
+    // can move currentSource more than once (a restored seed, then the
+    // lists, then the turn), and each step would otherwise start loading
+    // a picture that is never meant to be shown. A fresh closure per
+    // screen: Qt.callLater merges calls to the same function.
+    property bool _loadQueued: false
     onCurrentSourceChanged: {
+        reportImage();
+        if (!_loadQueued) {
+            _loadQueued = true;
+            Qt.callLater(function () {
+                root._loadQueued = false;
+                root.applySource();
+            });
+        }
+    }
+    function applySource() {
         if (currentSource !== ""
                 && currentSource === front.picture
                 && isSpanTurn === front.span) {
@@ -173,6 +199,20 @@ WallpaperItem {
         }
         loadSource(currentSource, isSpanTurn);
     }
+
+    // Tells SpanState which image this screen shows, for the saved state's
+    // `images`. Under a number of its own (see SpanState.reportImage()),
+    // not its name, which can be another screen's for a moment. Assigned
+    // once in Component.onCompleted, not bound: a binding would call
+    // newReporter() again whenever another screen takes a number.
+    property int reporterId: 0
+    function reportImage() {
+        if (reporterId !== 0) {
+            SpanState.reportImage(reporterId, myScreenName, currentSource);
+        }
+    }
+    onMyScreenNameChanged: reportImage()
+    Component.onDestruction: SpanState.reportImage(reporterId, "", "")
 
     // A fixed, per-screen number, so each screen's independent "single
     // image" pick differs from the others'. Derived from the screen's
@@ -415,7 +455,10 @@ WallpaperItem {
                 keys[files[j].url] = files[j];
             }
         }
-        SpanState.configure(_scanClaim, span, single, cfg.SlideInterval, cfg.SlideshowOrder || 0, keys);
+        // On the lock screen the saved state is used when FollowDesktop is on;
+        // on the desktop, when Resume is.
+        var useState = SpanState.role === "follower" ? cfg.FollowDesktop !== false : cfg.Resume !== false;
+        SpanState.configure(_scanClaim, span, single, eff.SlideInterval, eff.SlideshowOrder || 0, keys, useState);
         SpanState.logCounts(_scanJobs.length);
         // Tear the models down (and their threads with them). Deferred: this
         // runs inside the last model's own status handler.
@@ -429,8 +472,8 @@ WallpaperItem {
     }
 
     function _configSignature() {
-        return [JSON.stringify(cfg.SpanPaths || []), JSON.stringify(cfg.SinglePaths || []),
-                JSON.stringify(cfg.DisabledPaths || []), cfg.SlideInterval, cfg.SlideshowOrder || 0].join("|");
+        return [JSON.stringify(eff.SpanPaths || []), JSON.stringify(eff.SinglePaths || []),
+                JSON.stringify(eff.DisabledPaths || []), eff.SlideInterval, eff.SlideshowOrder || 0].join("|");
     }
 
     // The folders are scanned again on every tick, so images added to or
@@ -446,6 +489,11 @@ WallpaperItem {
     // retry, see SpanState._emptyRetry) would never let a slow folder
     // finish.
     function rescan() {
+        // The lock screen learns which folders to scan from the saved state
+        // (see `eff`), so it waits for the file (at most 3 s).
+        if (SpanState.role === "follower" && !SpanState.stateRead) {
+            return;
+        }
         var config = _configSignature();
         if (_scanPending > 0 && _scanConfig === config) {
             return;
@@ -459,7 +507,7 @@ WallpaperItem {
         _scanGeneration = _scanGeneration + 1;
         var gen = _scanGeneration;
         var jobs = [];
-        var disabled = cfg.DisabledPaths || [];
+        var disabled = eff.DisabledPaths || [];
         function add(kind) {
             return function (f) {
                 if (disabled.indexOf(f) === -1) {
@@ -467,8 +515,8 @@ WallpaperItem {
                 }
             };
         }
-        (cfg.SpanPaths || []).forEach(add("span"));
-        (cfg.SinglePaths || []).forEach(add("single"));
+        (eff.SpanPaths || []).forEach(add("span"));
+        (eff.SinglePaths || []).forEach(add("single"));
         _scanResults = [];
         _scanPending = jobs.length;
         _scanJobs = jobs;
@@ -517,7 +565,7 @@ WallpaperItem {
     // shows (and edits) the same settings.
     readonly property var sharedKeys: ["SpanPaths", "SinglePaths", "DisabledPaths", "SlideInterval", "SlideshowOrder", "SpanFit",
         "MatchPhysicalSize", "MonitorSizes", "SingleFillMode", "SingleBlur", "SingleColor", "ShowWallpaperHeader", "ShowOpenImageAction",
-        "ShowNextAction", "ShowNextIndividualAction", "ShowNextSpannedAction"]
+        "ShowNextAction", "ShowNextIndividualAction", "ShowNextSpannedAction", "Resume", "FollowDesktop"]
 
     function _stampOf(value) {
         var n = Number(value);
@@ -701,7 +749,21 @@ WallpaperItem {
         }
     }
 
+    // The lock screen's first scan, held back by rescan() until the saved
+    // state was read. A fresh closure per screen, as at startup.
+    Connections {
+        target: SpanState
+        function onStateReadChanged() {
+            if (SpanState.stateRead) {
+                Qt.callLater(function () { root.rescan(); });
+            }
+        }
+    }
+
     Component.onCompleted: {
+        SpanState.setFollowWanted(cfg.FollowDesktop !== false);
+        reporterId = SpanState.newReporter();
+        reportImage();
         root.loading = !nothingToShow;
         SpanState.logDesk(deskLayout());
         syncConfig();

@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.2.0 (2026-11-26)
+
+### Added
+
+- **Resume where it left off** setting, on by default. After a restart
+  the same images come back for the rest of their time, and the slideshow
+  goes on with the same sequence. The time counted is real screen time:
+  suspend and power-off don't count. The place in the slideshow is saved in
+  `~/.local/state/com.github.vasilkalchev.multimonitorslideshow/state.json`.
+  Untick the setting for new images at every start, as before.
+- The lock screen shows the desktop's slideshow: the same images, changing
+  at the same time, and the same image after sleep. It takes the folders
+  and settings from the desktop. New setting on the lock screen's page,
+  **Show the desktop's slideshow** (on by default); untick it for a
+  slideshow of its own. The lock screen's page shows only the settings
+  that apply there, and no longer the Context Menu button.
+
+### Changed
+
+- Random order: a new round of the shuffle is worked out the same way
+  whatever came before, so a resumed desktop and the lock screen continue
+  the same sequence. Running sequences don't change.
+
 ## 1.1.0 (2026-11-11)
 
 ### Added

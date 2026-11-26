@@ -21,6 +21,7 @@ import org.kde.kirigami as Kirigami
 import org.kde.plasma.plasma5support as P5Support
 import "desk.js" as Desk
 import "images.js" as Images
+import "state.js" as State
 
 ColumnLayout {
     id: root
@@ -148,7 +149,7 @@ ColumnLayout {
     }
 
     function shellQuote(text) {
-        return "'" + text.replace(/'/g, "'\\''") + "'";
+        return State.shellQuote(text);
     }
 
     P5Support.DataSource {

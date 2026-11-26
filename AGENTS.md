@@ -186,6 +186,22 @@ script refuses to replace a folder that is a git checkout.
   `Image` given a file that doesn't exist logs "Cannot open", so both
   caches are listed first and only listed thumbnails are asked for. An
   `Image` showing a `grabToImage()` result must not get a `sourceSize`.
+- **Saved state** (`state.json`, see "Resuming and the lock screen" in
+  how-it-works.md): only plasmashell writes it, the lock screen only
+  reads it, by `Qt.application.name`. `SpanState.configure()` is held
+  back until the file has been read (or 3 s), and nothing is saved
+  before the restore is decided or while the lists are empty
+  (`_emptyRetry` ticks would overwrite the saved place). Saves go through
+  `_requestSave()`, merged per event-loop turn: Next Spanned can step
+  through hundreds of ticks in one click. A restore sets `tickCount`
+  straight to its final value; restoring and then calling `advance()`
+  loads an image that is never meant to be shown.
+- **Images load a moment after `currentSource` changes** (`main.qml`,
+  `applySource()`), once per event-loop turn: one change of turn can move
+  `currentSource` several times.
+- **The executable engine skips a source that is still connected**:
+  call `disconnectSource()` in `onNewData`, or the same command never
+  runs again.
 - **Physical sizes can't be checked in screenshots**, which count pixels.
   Use `utils/span-test-5120x1440.png` (two 16:9 halves with lines and
   400 px shapes on both sides of the seam, made by `make-span-test.sh`)
@@ -229,6 +245,19 @@ None of this needs clicking or a screenshot of the screen.
 - **Seam check**: grab every screen on the seam-test picture before and
   after a change and compare the grabs with `magick compare -metric AE`.
   They should be identical.
+- **Lock screen**: `timeout 40 /usr/lib/kscreenlocker_greet --testing`
+  opens the real lock screen over the monitors, with the plugin from
+  `~/.local/share/plasma/wallpapers/` (or another copy with
+  `XDG_DATA_HOME=<dir>`, which needs `<dir>/plasma/wallpapers/<id>/`).
+  Its lines are in the journal (`journalctl _COMM=kscreenlocker_g`); its
+  `Qt.application.name` is `kscreenlocker_greet`. In testing mode it
+  closes by itself after a few seconds, sometimes two, so a test that
+  waits for an image change should give the desktop only a few seconds
+  left (edit `shown` in `state.json` and restart the shell). A real lock
+  (`loginctl lock-session`) needs the user's password.
+- **Shell restarts**: systemd allows 3 starts of
+  `plasma-plasmashell.service` a minute; a fourth fails and leaves the
+  desktop without a shell until the next try. Keep restarts 25 s apart.
 - **Settings page**: `timeout 10 kcmshell6 kcm_wallpaper 2>err.log` loads
   the installed `config.qml` in its own process; its messages are on
   stderr. A missing folder is listed as that process's working
@@ -241,6 +270,9 @@ None of this needs clicking or a screenshot of the screen.
   small `Window` that holds one, sets `geom`, `source` and the fill
   properties and saves `grabToImage()` results can be run with PySide6
   (`QQmlApplicationEngine`; there is no `qml` tool here).
+- **State and lap order**: `uv run --no-project --with
+  pyside6-essentials utils/test-state.py` runs `state.js` and
+  `lapOrder()` (cut out of `SpanState.qml`) in Qt's JavaScript engine.
 - **Scripts**: `utils/package.sh`, `kwin-layout-keeper.py --dry-run`,
   and `make-logo.py <out.png>` in a venv with cairosvg, pillow and numpy.
 
