@@ -4,9 +4,12 @@
 import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
+import QtCore
 import org.kde.kirigami as Kirigami
 import org.kde.kquickcontrols as KQuickControls
+import org.kde.plasma.plasma5support as P5Support
 import "desk.js" as Desk
+import "state.js" as State
 
 ColumnLayout {
     id: root
@@ -26,6 +29,61 @@ ColumnLayout {
 
     property int cfg_SlideshowOrder: 0
     property int cfg_SlideshowOrderDefault: 0
+
+    property bool cfg_Resume: true
+    property bool cfg_ResumeDefault: true
+    property bool cfg_FollowDesktop: true
+    property bool cfg_FollowDesktopDefault: true
+
+    // Where the page is open, from the settings module Plasma hands it.
+    // Screen Locking's (ScreenLockerKcm) is the only one with a
+    // shellConfigFile. A module with a wallpaperConfigFile but no
+    // shellConfigFile sets up a wallpaper for something other than the
+    // desktop or the lock screen (the Plasma Login Manager's login screen,
+    // PlasmaLoginKcm): no Resume, no context menu, and no desktop to
+    // follow there, but the slideshow's own settings. The desktop's are
+    // WallpaperModule (System Settings) and plasmashell's own dialog. If a
+    // future Plasma renames these, the page shows the desktop's version,
+    // which is harmless.
+    readonly property bool forLockScreen: configDialog !== undefined && configDialog !== null
+                                          && configDialog.shellConfigFile !== undefined
+    readonly property bool forDesktop: configDialog === undefined || configDialog === null
+                                       || configDialog.wallpaperConfigFile === undefined
+    // The lock screen shows the desktop's slideshow: its own slideshow
+    // settings don't apply then, and are hidden.
+    readonly property bool ownSlideshow: !forLockScreen || !cfg_FollowDesktop
+
+    // What the desktop has saved (state.json, written by plasmashell), for
+    // the lock screen's status line: null if there is nothing to follow.
+    property var desktopState: null
+    property bool desktopStateRead: false
+    readonly property string desktopStateFile: decodeURIComponent(String(StandardPaths.writableLocation(StandardPaths.GenericStateLocation))
+                                                                  .replace(/^file:\/\//, ""))
+                                               + "/com.github.vasilkalchev.multimonitorslideshow/state.json"
+    P5Support.DataSource {
+        engine: "executable"
+        onNewData: (source, data) => {
+            disconnectSource(source);
+            const state = data["exit code"] === 0 ? State.parse(data["stdout"]) : null;
+            root.desktopState = state !== null && state.settings !== null ? state : null;
+            root.desktopStateRead = true;
+        }
+        Component.onCompleted: {
+            if (root.forLockScreen) {
+                connectSource("cat -- " + State.shellQuote(root.desktopStateFile));
+            }
+        }
+    }
+    readonly property string desktopStatus: {
+        if (!desktopStateRead || desktopState === null) {
+            return "";
+        }
+        const minutes = Math.max(1, Math.round(desktopState.interval / 60));
+        const images = desktopState.count >= 0
+            ? i18ndp("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "The desktop's slideshow has %1 image.", "The desktop's slideshow has %1 images.", desktopState.count)
+            : i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "The desktop has a slideshow.");
+        return images + " " + i18ndp("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "A new one every minute.", "A new one every %1 minutes.", minutes);
+    }
 
     property int cfg_SpanFit: 0
     property int cfg_SpanFitDefault: 0
@@ -236,8 +294,51 @@ ColumnLayout {
         id: form
         Layout.bottomMargin: Kirigami.Units.largeSpacing
 
+        // Lock screen only: show the desktop's slideshow, or one of its own.
+        // With a label, so it reads as one more row under Screen Locking's
+        // own (Wallpaper type and the rest): unlabeled, it would be centered
+        // on its own once the labeled rows below are hidden.
+        ColumnLayout {
+            Kirigami.FormData.label: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Slideshow:")
+            // Next to the checkbox, not centered on the whole block.
+            Kirigami.FormData.labelAlignment: Qt.AlignTop
+            visible: root.forLockScreen
+            Layout.maximumWidth: Kirigami.Units.gridUnit * 24
+            spacing: 0
+
+            QQC2.CheckBox {
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Show the desktop's slideshow")
+                checked: root.cfg_FollowDesktop
+                onToggled: { root.cfg_FollowDesktop = checked; root.stamp(); }
+
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Unticked, the lock screen runs a slideshow of its own, with the folders and settings below.")
+            }
+
+            QQC2.Label {
+                visible: root.cfg_FollowDesktop
+                Layout.fillWidth: true
+                Layout.leftMargin: Kirigami.Units.gridUnit + Kirigami.Units.smallSpacing
+                wrapMode: Text.Wrap
+                font: Kirigami.Theme.smallFont
+                color: Kirigami.Theme.disabledTextColor
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "The same images as the desktop, changing at the same time, and continuing after sleep. Folders and timing are set in the desktop's wallpaper settings.")
+            }
+
+            Kirigami.InlineMessage {
+                visible: root.cfg_FollowDesktop && root.desktopStateRead
+                Layout.fillWidth: true
+                Layout.topMargin: Kirigami.Units.smallSpacing
+                type: root.desktopState !== null ? Kirigami.MessageType.Information : Kirigami.MessageType.Warning
+                text: root.desktopState !== null ? root.desktopStatus
+                    : i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "The desktop doesn't use Multi-monitor Slideshow, so the lock screen has nothing to follow. Untick to set up a slideshow for the lock screen.")
+            }
+        }
+
         RowLayout {
             Kirigami.FormData.label: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Change every:")
+            visible: root.ownSlideshow
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.SpinBox {
@@ -272,8 +373,10 @@ ColumnLayout {
                 QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanned and individual images take turns in one sequence. Random shuffles it. The other orders go through the images by file name or by date modified; on an individual turn the monitors show the next images in line, left to right.")
             }
 
+            // Only the desktop has a right-click menu.
             QQC2.Button {
                 id: menuButton
+                visible: root.forDesktop
                 Layout.leftMargin: Kirigami.Units.largeSpacing
                 icon.name: "application-menu"
                 text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Context Menu…")
@@ -338,8 +441,35 @@ ColumnLayout {
             }
         }
 
+        // Under "Change every:" and "Order:", which it goes with. Desktop
+        // only: the lock screen has "Show the desktop's slideshow" instead.
+        ColumnLayout {
+            visible: root.forDesktop
+            spacing: 0
+
+            QQC2.CheckBox {
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Resume where it left off")
+                checked: root.cfg_Resume
+                onToggled: { root.cfg_Resume = checked; root.stamp(); }
+
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "After a restart (a reboot, a new login), shows the same images for the rest of their time, then goes on with the same sequence.")
+            }
+
+            QQC2.Label {
+                Layout.leftMargin: Kirigami.Units.gridUnit + Kirigami.Units.smallSpacing
+                Layout.maximumWidth: Kirigami.Units.gridUnit * 26
+                wrapMode: Text.Wrap
+                font: Kirigami.Theme.smallFont
+                color: Kirigami.Theme.disabledTextColor
+                text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Counts real screen time: suspend and power-off don't count.")
+            }
+        }
+
         RowLayout {
             Kirigami.FormData.label: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanned images:")
+            visible: root.ownSlideshow
             enabled: root.spanSettingsApply
             spacing: Kirigami.Units.smallSpacing
 
@@ -428,6 +558,7 @@ ColumnLayout {
         }
 
         QQC2.CheckBox {
+            visible: root.ownSlideshow
             enabled: root.spanSettingsApply && root.joinMatters
             text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Always center on the bezel between the monitors")
             checked: root.cfg_SpanFit === 1
@@ -440,6 +571,7 @@ ColumnLayout {
 
         RowLayout {
             Kirigami.FormData.label: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Individual images:")
+            visible: root.ownSlideshow
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.ComboBox {
@@ -491,7 +623,7 @@ ColumnLayout {
         }
 
         QQC2.Label {
-            visible: text !== ""
+            visible: text !== "" && root.ownSlideshow
             Layout.maximumWidth: Kirigami.Units.gridUnit * 26
             wrapMode: Text.Wrap
             font: Kirigami.Theme.smallFont
@@ -502,6 +634,7 @@ ColumnLayout {
 
     // Folders on the left, the selected folder's images on the right.
     RowLayout {
+        visible: root.ownSlideshow
         Layout.fillWidth: true
         Layout.fillHeight: true
         spacing: 0
@@ -565,11 +698,21 @@ ColumnLayout {
             FolderImages {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                folder: root.selectedFolder
+                // Hidden on the lock screen while it shows the desktop's
+                // slideshow: no folder, so no thumbnails are made.
+                folder: root.ownSlideshow ? root.selectedFolder : ""
                 isSpan: root.selectedIsSpan
                 folderEnabled: root.cfg_DisabledPaths.indexOf(root.selectedFolder) === -1
                 order: root.cfg_SlideshowOrder
             }
         }
+    }
+
+    // The folders normally take the height the page is given. Without them
+    // (the lock screen showing the desktop's slideshow), this does, so the
+    // form stays at the top instead of floating in the middle.
+    Item {
+        visible: !root.ownSlideshow
+        Layout.fillHeight: true
     }
 }

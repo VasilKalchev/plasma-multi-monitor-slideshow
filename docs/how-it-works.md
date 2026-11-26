@@ -15,6 +15,7 @@ together. [cropping.md](cropping.md) covers the placement math in detail.
 | `contents/ui/qmldir` | Registers `SpanState` as a singleton, which is what makes it one object for every screen. |
 | `contents/ui/ImageLayer.qml` | One of the two crossfading image layers on a screen. |
 | `contents/ui/desk.js` | The desk that spanned images are laid out on (see below), used by `main.qml` and `config.qml`. |
+| `contents/ui/state.js` | The saved place in the slideshow (`state.json`): writing, reading and checking it, and the time left. Used by `SpanState.qml`. |
 | `contents/ui/images.js` | Which files count as images and how the sorted orders compare them, used by the slideshow and by the settings page's thumbnail grid. |
 | `contents/ui/config.qml` | The settings page. |
 | `contents/ui/FolderListSection.qml` | One folder list on the settings page. |
@@ -24,6 +25,7 @@ together. [cropping.md](cropping.md) covers the placement math in detail.
 | `utils/span-test-5120x1440.png`, `utils/make-span-test.sh` | A test image for checking spanned images on two 16:9 monitors, and the script that makes it. |
 | `utils/package.sh`, `utils/make-preview.py` | Build the release archive and the preview image. |
 | `utils/make-logo.py` | Draws the KDE Store logo. |
+| `utils/test-state.py` | Tests for `state.js` and the Random lap order, run in Qt's JavaScript engine. |
 
 ## One wallpaper per screen, one shared state
 
@@ -129,7 +131,82 @@ A running wallpaper doesn't always get notified when the dialog saves, so
 settings are read again at every image change. **Next** applies
 them right away.
 
+## Resuming and the lock screen
+
+What every screen shows follows from a few numbers in `SpanState`: the
+seed of the shuffle, `tickCount`, and the image lists (and, for
+individual images, each screen's connector name). So saving those is
+enough to bring the same images back. That's what **Resume where it
+left off** does.
+
+**Saving.** plasmashell saves its place to
+`~/.local/state/com.github.vasilkalchev.multimonitorslideshow/state.json`:
+
+```json
+{"v":1, "written":1795723873928, "order":0, "interval":1800,
+ "seed":427408983, "tick":2, "shown":1770, "check":"7bb0d802",
+ "span":true, "images":{"HDMI-A-1":"file:///…", "HDMI-A-2":"file:///…"}}
+```
+
+`check` is a hash of the order and both image lists, `shown` the seconds
+the current image has been on screen, and `images` what each monitor
+shows (only for reading and for a check after a restore). The file is
+written at every image change and once a minute, through the
+plasma5support "executable" engine, to a temporary file that is then
+renamed. Saves are merged, so Next Spanned stepping through many turns
+writes once.
+
+**Screen time.** `shown` grows by one minute at each beat of a Timer.
+Qt timers stop while the machine is suspended, like the slideshow timer
+itself, so suspend doesn't count, and neither does time switched off. A
+shutdown loses the time since the last beat, so an image can stay up to a
+minute longer than its interval, never shorter. Time locked, or with the
+monitors off for power saving, counts, as it does for the slideshow
+timer.
+
+**Restoring.** At startup the file is read before the first image is
+picked (at most 3 s). If the setting is on and the order and the lists
+still match, the seed and the tick are taken over and the images come
+back. The image then stays up for the rest of its interval, or the
+slideshow goes on to the next image at once if its time is up. Anything
+else (no file, a damaged one, other images) starts a new slideshow, and
+the journal says why.
+
+**The lock screen** is another program, `kscreenlocker_greet`, with its
+own settings (in `kscreenlockerrc`) and its own `SpanState`. The plugin
+tells the two apart by `Qt.application.name`: `plasmashell` writes the
+file, `kscreenlocker_greet` only reads it, and anything else does
+neither. With **Show the desktop's slideshow** on (`FollowDesktop`, a
+setting only the lock screen's page shows), the lock screen runs with
+the desktop's settings, which the desktop saves in the file too: it
+scans the desktop's folders, so its lists match, and draws the images
+the same way. Its own folders and settings are only used with the
+setting off, or when there is no saved state to follow (the desktop
+doesn't use the plugin). It takes the desktop's seed and tick and adds the
+time since the file was written (the desktop has been running all
+along), but at most one minute: the desktop writes at least once a
+minute while awake, so any more than that was spent asleep, and sleep
+doesn't count here either. It reads the file again every 10 s and
+changes images when the desktop does. Its own slideshow timer stays
+stopped meanwhile. Locking, sleeping and waking up again keeps the same
+image, for the rest of its time.
+
+The Random order's swap at the start of a lap (so a lap doesn't begin
+with the image the last one ended on) is worked out from the previous
+lap's shuffle, not from what the process remembers, so a restored desktop
+and the lock screen get the same sequence as a desktop that has been
+running all along.
+
 ## The settings page
+
+The same page sets up the desktop and the lock screen. It tells them
+apart by what Plasma hands it: in Screen Locking's settings,
+`configDialog` is the lock screen's settings module, the only one with a
+`shellConfigFile`. There it shows **Show the desktop's slideshow**
+and, while that is on, a line about the desktop's slideshow (read from
+`state.json`) instead of the slideshow's own settings. **Resume where it
+left off** and **Context Menu…** are only shown on the desktop.
+
 
 The page lists the individual and spanning folders on the left, and a
 thumbnail grid of the selected folder on the right, in the chosen order.

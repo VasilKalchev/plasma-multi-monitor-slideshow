@@ -43,6 +43,12 @@ the same moment.
 - **Settings are shared by all monitors.** Change them from any monitor.
 - **Smooth crossfades** between images, and new images in your folders
   are picked up at the next change.
+- **Resumes where it left off.** After a restart the same images come back
+  for the rest of their time, counted in real screen time (suspend and
+  power-off don't count).
+- **On the lock screen too.** The lock screen shows the desktop's
+  slideshow: the same images, changing at the same time, so nothing
+  changes when you unlock.
 
 ## Install
 
@@ -100,6 +106,23 @@ and restarts Plasma. To update, run `git pull` and `utils/deploy.sh` again.
 If a spanned image shows on only one monitor, step 3 was missed: the
 other monitors still have another wallpaper type.
 
+### Lock screen
+
+The lock screen uses the same installation; nothing else needs to be
+installed.
+
+1. Open **System Settings → Screen Locking → Appearance**.
+2. Set **Wallpaper type** to **Multi-monitor Slideshow** and click
+   **Apply**.
+
+**Show the desktop's slideshow** is ticked by default: the lock screen
+then shows the images the desktop shows, changing at the same time, and
+after sleep it continues with the same image. It takes the folders and
+all other settings from the desktop, so there is nothing else to set up
+there, and the page shows only this setting and a line about the
+desktop's slideshow. Untick it to give the lock screen a slideshow of
+its own, with its own folders and settings.
+
 ### Settings
 
 ![The Desktop Folder Settings dialog with Multi-monitor Slideshow as the wallpaper type: Change every, Order and Context Menu, the spanned-image options, the individual and spanning folders on the left, and thumbnails of the selected individual folder on the right](docs/images/settings.png)
@@ -113,6 +136,8 @@ Click a folder to see its images. A spanning folder shows wide previews:
 | **Change every** | How long each image stays up. |
 | **Order** | **Random** shuffles all images, spanned and individual together. **A to Z**, **Z to A**, **Newest first** and **Oldest first** go through them by file name or date modified. On an individual turn, the monitors show the next images in line, left to right. |
 | **Context Menu…** | Which entries the desktop's right-click menu shows. |
+| **Resume where it left off** | On by default. After a restart (a reboot, a new login), the desktop shows the same images for the rest of their time, then goes on with the same sequence. Only the time an image was actually on screen counts: time in suspend or switched off doesn't. Untick it for new images at every start, as in version 1.1.0. |
+| **Show the desktop's slideshow** | Lock screen only, on by default. See [Lock screen](#lock-screen). |
 | **Same physical size on every monitor** | Scales spanned images per monitor, so they have the same real size on monitors with different pixel sizes, and lines continue straight across the bezel. |
 | **Monitor Sizes…** | The size of each monitor, as it reports it. Correct a monitor that reports a wrong size here. |
 | **Always center on the bezel between the monitors** | Off by default. Full-width images are always centered on the bezel; with this on, panoramas are too, instead of on your monitors as a whole. See below. |

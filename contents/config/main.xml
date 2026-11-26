@@ -26,6 +26,14 @@
       <label>Order of the images: 0 = random, 1 = A to Z, 2 = Z to A, 3 = date modified (newest first), 4 = date modified (oldest first)</label>
       <default>0</default>
     </entry>
+    <entry name="Resume" type="Bool">
+      <label>Desktop: resume where the slideshow left off; after a restart, show the same images for the rest of their screen time</label>
+      <default>true</default>
+    </entry>
+    <entry name="FollowDesktop" type="Bool">
+      <label>Lock screen only: show the desktop's slideshow, with the desktop's folders and settings from its saved state, instead of a slideshow of its own</label>
+      <default>true</default>
+    </entry>
     <entry name="SpanFit" type="Int">
       <label>Where spanned images that aren't full-width are centered: 0 = on all monitors together, 1 = on the join between the monitors</label>
       <default>0</default>
