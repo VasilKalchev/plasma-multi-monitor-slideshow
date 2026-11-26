@@ -35,13 +35,20 @@ ColumnLayout {
     property bool cfg_FollowDesktop: true
     property bool cfg_FollowDesktopDefault: true
 
-    // The page is open in Screen Locking's settings, not the desktop's: the
-    // lock screen's settings module (ScreenLockerKcm) is the only one with
-    // a wallpaperConfigFile. The desktop's are WallpaperModule (System
-    // Settings) and plasmashell's own dialog. If a future Plasma renames
-    // it, the page shows the desktop's version, which is harmless.
+    // Where the page is open, from the settings module Plasma hands it.
+    // Screen Locking's (ScreenLockerKcm) is the only one with a
+    // shellConfigFile. A module with a wallpaperConfigFile but no
+    // shellConfigFile sets up a wallpaper for something other than the
+    // desktop or the lock screen (the Plasma Login Manager's login screen,
+    // PlasmaLoginKcm): no Resume, no context menu, and no desktop to
+    // follow there, but the slideshow's own settings. The desktop's are
+    // WallpaperModule (System Settings) and plasmashell's own dialog. If a
+    // future Plasma renames these, the page shows the desktop's version,
+    // which is harmless.
     readonly property bool forLockScreen: configDialog !== undefined && configDialog !== null
-                                          && configDialog.wallpaperConfigFile !== undefined
+                                          && configDialog.shellConfigFile !== undefined
+    readonly property bool forDesktop: configDialog === undefined || configDialog === null
+                                       || configDialog.wallpaperConfigFile === undefined
     // The lock screen shows the desktop's slideshow: its own slideshow
     // settings don't apply then, and are hidden.
     readonly property bool ownSlideshow: !forLockScreen || !cfg_FollowDesktop
@@ -366,10 +373,10 @@ ColumnLayout {
                 QQC2.ToolTip.text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Spanned and individual images take turns in one sequence. Random shuffles it. The other orders go through the images by file name or by date modified; on an individual turn the monitors show the next images in line, left to right.")
             }
 
-            // The lock screen has no right-click desktop menu.
+            // Only the desktop has a right-click menu.
             QQC2.Button {
                 id: menuButton
-                visible: !root.forLockScreen
+                visible: root.forDesktop
                 Layout.leftMargin: Kirigami.Units.largeSpacing
                 icon.name: "application-menu"
                 text: i18nd("plasma_wallpaper_com.github.vasilkalchev.multimonitorslideshow", "Context Menu…")
@@ -437,7 +444,7 @@ ColumnLayout {
         // Under "Change every:" and "Order:", which it goes with. Desktop
         // only: the lock screen has "Show the desktop's slideshow" instead.
         ColumnLayout {
-            visible: !root.forLockScreen
+            visible: root.forDesktop
             spacing: 0
 
             QQC2.CheckBox {

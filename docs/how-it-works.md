@@ -202,7 +202,7 @@ running all along.
 The same page sets up the desktop and the lock screen. It tells them
 apart by what Plasma hands it: in Screen Locking's settings,
 `configDialog` is the lock screen's settings module, the only one with a
-`wallpaperConfigFile`. There it shows **Show the desktop's slideshow**
+`shellConfigFile`. There it shows **Show the desktop's slideshow**
 and, while that is on, a line about the desktop's slideshow (read from
 `state.json`) instead of the slideshow's own settings. **Resume where it
 left off** and **Context Menu…** are only shown on the desktop.
